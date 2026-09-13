@@ -1,4 +1,5 @@
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:shiftly/models/automatic_expense.dart';
 import 'package:shiftly/models/break_type.dart';
 import 'package:shiftly/models/expense.dart';
 import 'package:shiftly/models/job_type.dart';
@@ -21,6 +22,7 @@ class PersistenceService {
     Hive.registerAdapter(BreakTypeAdapter());
     Hive.registerAdapter(ExpenseAdapter());
     Hive.registerAdapter(WageEntryAdapter());
+    Hive.registerAdapter(AutomaticExpenseAdapter());
 
     await Hive.openBox<Shift>(shiftsBoxName);
     await Hive.openBox<JobType>(jobTypesBoxName);

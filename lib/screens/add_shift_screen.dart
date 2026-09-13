@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:shiftly/models/automatic_expense.dart';
 import 'package:shiftly/models/break_type.dart';
 import 'package:shiftly/models/job_type.dart';
 import 'package:shiftly/models/shift.dart';
@@ -40,10 +41,14 @@ class _AddShiftScreenState extends State<AddShiftScreen>
 
   // Timer State
   final List<TextEditingController> _timerTipControllers = [];
+  final List<TextEditingController> _autoExpenseAmountControllers = [];
+  final List<TextEditingController> _autoExpenseDescControllers = [];
 
   @override
   void initState() {
     super.initState();
+    final settings = context.read<SettingsProvider>();
+
     _tabController = TabController(
       length: widget.shiftToEdit == null ? 3 : 1,
       vsync: this,
@@ -63,6 +68,16 @@ class _AddShiftScreenState extends State<AddShiftScreen>
       _selectedJobTypeId = s.jobTypeId;
       _selectedBreakType = s.breakType ?? BreakType.none;
 
+      final expenses = s.automaticExpenses ?? [];
+      for (var e in expenses) {
+        _autoExpenseAmountControllers.add(
+          TextEditingController(text: e.amount.toStringAsFixed(0)),
+        );
+        _autoExpenseDescControllers.add(
+          TextEditingController(text: e.description),
+        );
+      }
+
       if (s.individualTips != null && s.individualTips!.isNotEmpty) {
         for (var tip in s.individualTips!) {
           _tipControllers.add(
@@ -79,6 +94,17 @@ class _AddShiftScreenState extends State<AddShiftScreen>
     } else {
       _tipControllers.add(TextEditingController(text: '0'));
       _timerTipControllers.add(TextEditingController(text: '0'));
+
+      if (settings.automaticExpenseEnabled) {
+        for (var e in settings.defaultAutomaticExpenses) {
+          _autoExpenseAmountControllers.add(
+            TextEditingController(text: e.amount.toStringAsFixed(0)),
+          );
+          _autoExpenseDescControllers.add(
+            TextEditingController(text: e.description),
+          );
+        }
+      }
 
       final timer = context.read<TimerProvider>();
       final isFromTimerReview = timer.startTime != null && !timer.isRunning;
@@ -136,6 +162,12 @@ class _AddShiftScreenState extends State<AddShiftScreen>
     for (var c in _timerTipControllers) {
       c.dispose();
     }
+    for (var c in _autoExpenseAmountControllers) {
+      c.dispose();
+    }
+    for (var c in _autoExpenseDescControllers) {
+      c.dispose();
+    }
     _rawTextController.dispose();
     _tabController.dispose();
     _pulseController.dispose();
@@ -156,6 +188,38 @@ class _AddShiftScreenState extends State<AddShiftScreen>
         .toList();
   }
 
+  List<AutomaticExpense>? _getExpenseList() {
+    List<AutomaticExpense> list = [];
+    for (int i = 0; i < _autoExpenseAmountControllers.length; i++) {
+      final amountText = _autoExpenseAmountControllers[i].text.trim();
+      final desc = _autoExpenseDescControllers[i].text.trim();
+
+      if (amountText.isEmpty && desc.isEmpty) continue;
+
+      final amount = double.tryParse(amountText);
+      if (desc.isEmpty) {
+        UIUtils.showSnackBar(
+          context,
+          'נא להזין תיאור לכל ההוצאות',
+          isError: true,
+        );
+        return null;
+      }
+      if (amount == null || amount < 0) {
+        UIUtils.showSnackBar(
+          context,
+          'סכום ההוצאה "$desc" אינו תקין',
+          isError: true,
+        );
+        return null;
+      }
+      if (amount > 0) {
+        list.add(AutomaticExpense(description: desc, amount: amount));
+      }
+    }
+    return list;
+  }
+
   void _finishTimerShift() async {
     final timerProvider = context.read<TimerProvider>();
     final shiftProvider = context.read<ShiftProvider>();
@@ -164,12 +228,10 @@ class _AddShiftScreenState extends State<AddShiftScreen>
       return;
     }
 
-    final totalTips = _calculateTotalTips(_timerTipControllers);
     final confirmed = await UIUtils.showConfirmDialog(
       context: context,
       title: 'סיום משמרת',
-      content:
-          'האם אתה בטוח שברצונך לשמור את המשמרת עם טיפים בסך ${UIUtils.formatCurrency(totalTips)}?',
+      content: 'האם אתה בטוח שברצונך לשמור את פרטי המשמרת?',
     );
     if (confirmed != true) return;
     if (!mounted) return;
@@ -177,6 +239,9 @@ class _AddShiftScreenState extends State<AddShiftScreen>
     final end = timerProvider.isRunning
         ? DateTime.now()
         : (timerProvider.reviewEndTime ?? DateTime.now());
+
+    final expenses = _getExpenseList();
+    if (expenses == null) return;
 
     final job = shiftProvider.getJobTypeById(timerProvider.jobTypeId ?? "");
 
@@ -186,9 +251,10 @@ class _AddShiftScreenState extends State<AddShiftScreen>
       startTime: timerProvider.startTime!,
       endTime: end,
       jobTypeId: timerProvider.jobTypeId!,
-      tips: totalTips,
+      tips: _calculateTotalTips(_timerTipControllers),
       individualTips: _getTipList(_timerTipControllers),
       hourlyRate: job?.getRateForDate(timerProvider.startTime!),
+      automaticExpenses: expenses,
       breakType: timerProvider.accumulatedUnpaidMinutes > 0
           ? BreakType.unpaid
           : BreakType.none,
@@ -225,21 +291,20 @@ class _AddShiftScreenState extends State<AddShiftScreen>
       end = end.add(const Duration(days: 1));
     }
 
-    final dateStr = DateFormat('dd/MM/yyyy').format(_selectedDate);
-    final settings = context.read<SettingsProvider>();
-    final totalTips = _calculateTotalTips(_tipControllers);
-    final shiftProvider = context.read<ShiftProvider>();
-
     final confirmed = await UIUtils.showConfirmDialog(
       context: context,
       title: widget.shiftToEdit != null ? 'עדכון משמרת' : 'שמירת משמרת',
-      content:
-          'האם לשמור את פרטי המשמרת מיום $dateStr עם טיפים בסך ${UIUtils.formatCurrency(totalTips)}?',
+      content: 'האם אתה בטוח שברצונך לשמור את פרטי המשמרת?',
     );
     if (confirmed != true) return;
     if (!mounted) return;
 
+    final shiftProvider = context.read<ShiftProvider>();
+    final settings = context.read<SettingsProvider>();
     final job = shiftProvider.getJobTypeById(_selectedJobTypeId!);
+
+    final expenses = _getExpenseList();
+    if (expenses == null) return;
 
     if (widget.shiftToEdit != null) {
       final s = widget.shiftToEdit!;
@@ -247,16 +312,17 @@ class _AddShiftScreenState extends State<AddShiftScreen>
       s.startTime = start;
       s.endTime = end;
       s.jobTypeId = _selectedJobTypeId!;
-      s.tips = totalTips;
+      s.tips = _calculateTotalTips(_tipControllers);
       s.individualTips = _getTipList(_tipControllers);
       s.hourlyRate = job?.getRateForDate(_selectedDate);
+      s.automaticExpenses = expenses;
       s.breakType = _selectedBreakType;
       s.unpaidBreakMinutes = settings.unpaidBreakDurationMinutes;
 
       if (!mounted) return;
       shiftProvider.updateShift(s);
 
-      UIUtils.showSnackBar(context, 'משמרת מיום $dateStr עודכנה בהצלחה');
+      UIUtils.showSnackBar(context, 'המשמרת עודכנה בהצלחה');
     } else {
       final shift = Shift(
         id: const Uuid().v4(),
@@ -264,16 +330,17 @@ class _AddShiftScreenState extends State<AddShiftScreen>
         startTime: start,
         endTime: end,
         jobTypeId: _selectedJobTypeId!,
-        tips: totalTips,
+        tips: _calculateTotalTips(_tipControllers),
         individualTips: _getTipList(_tipControllers),
         hourlyRate: job?.getRateForDate(_selectedDate),
+        automaticExpenses: expenses,
         breakType: _selectedBreakType,
         unpaidBreakMinutes: settings.unpaidBreakDurationMinutes,
       );
       if (!mounted) return;
       shiftProvider.addShift(shift);
 
-      UIUtils.showSnackBar(context, 'משמרת מיום $dateStr נשמרה בהצלחה');
+      UIUtils.showSnackBar(context, 'המשמרת נשמרה בהצלחה');
     }
     if (mounted) Navigator.pop(context);
   }
@@ -307,6 +374,11 @@ class _AddShiftScreenState extends State<AddShiftScreen>
       );
       if (shift != null) {
         shift.hourlyRate = job?.getRateForDate(shift.date);
+        if (settings.automaticExpenseEnabled) {
+          shift.automaticExpenses = settings.defaultAutomaticExpenses
+              .map((e) => e.copyWith())
+              .toList();
+        }
         if (!mounted) continue;
         shiftProvider.addShift(shift);
         addedCount++;
@@ -603,6 +675,8 @@ class _AddShiftScreenState extends State<AddShiftScreen>
                 ),
                 const SizedBox(height: AppTheme.spaceMd),
                 _buildTipsSection(_timerTipControllers),
+                const SizedBox(height: AppTheme.spaceMd),
+                _buildAutoExpensesSection(),
               ],
             ),
           ),
@@ -854,6 +928,8 @@ class _AddShiftScreenState extends State<AddShiftScreen>
                 ),
                 const SizedBox(height: AppTheme.spaceMd),
                 _buildTipsSection(_tipControllers),
+                const SizedBox(height: AppTheme.spaceMd),
+                _buildAutoExpensesSection(),
               ],
             ),
           ),
@@ -1065,6 +1141,90 @@ class _AddShiftScreenState extends State<AddShiftScreen>
           }),
           icon: const Icon(Icons.add_circle_outline_rounded),
           label: const Text('הוסף טיפ'),
+          style: TextButton.styleFrom(foregroundColor: AppTheme.primaryDark),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAutoExpensesSection() {
+    double total = 0;
+    for (var c in _autoExpenseAmountControllers) {
+      total += double.tryParse(c.text) ?? 0.0;
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'הוצאות למשמרת',
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppTheme.expense.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                'סה"כ -${UIUtils.formatCurrency(total)}',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.expenseSoft,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        ...List.generate(_autoExpenseAmountControllers.length, (index) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 8.0),
+            child: Row(
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: TextField(
+                    controller: _autoExpenseDescControllers[index],
+                    decoration: const InputDecoration(labelText: 'תיאור'),
+                    onChanged: (_) => setState(() {}),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  flex: 1,
+                  child: TextField(
+                    controller: _autoExpenseAmountControllers[index],
+                    decoration: const InputDecoration(labelText: '₪'),
+                    keyboardType: TextInputType.number,
+                    onChanged: (_) => setState(() {}),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(
+                    Icons.remove_circle_outline,
+                    color: AppTheme.expense,
+                  ),
+                  onPressed: () => setState(() {
+                    _autoExpenseAmountControllers.removeAt(index);
+                    _autoExpenseDescControllers.removeAt(index);
+                  }),
+                ),
+              ],
+            ),
+          );
+        }),
+        TextButton.icon(
+          onPressed: () => setState(() {
+            _autoExpenseAmountControllers.add(TextEditingController(text: '0'));
+            _autoExpenseDescControllers.add(TextEditingController(text: ''));
+          }),
+          icon: const Icon(Icons.add_circle_outline_rounded),
+          label: const Text('הוסף הוצאה'),
           style: TextButton.styleFrom(foregroundColor: AppTheme.primaryDark),
         ),
       ],

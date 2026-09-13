@@ -4,6 +4,7 @@ import 'package:shiftly/theme/app_theme.dart';
 class UIUtils {
   /// Formats a double value as currency with the ₪ symbol.
   /// Example: 100.5 -> "₪100.50"
+  /// Handles RTL negative formatting: "-₪50.00"
   static String formatCurrency(double amount) {
     final formatted = amount.abs().toStringAsFixed(2);
     if (amount < 0) {

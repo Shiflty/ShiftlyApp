@@ -1,4 +1,5 @@
 import 'package:hive/hive.dart';
+import 'package:shiftly/models/automatic_expense.dart';
 
 import 'break_type.dart';
 
@@ -36,6 +37,12 @@ class Shift extends HiveObject {
   @HiveField(10)
   double? hourlyRate;
 
+  @HiveField(11)
+  double? automaticExpense; // Deprecated but kept for migration
+
+  @HiveField(12)
+  List<AutomaticExpense>? automaticExpenses;
+
   Shift({
     required this.id,
     required this.date,
@@ -47,7 +54,19 @@ class Shift extends HiveObject {
     this.unpaidBreakMinutes = 45.0,
     this.individualTips,
     this.hourlyRate,
+    this.automaticExpense = 0.0,
+    this.automaticExpenses,
   });
+
+  double get totalAutomaticExpenses {
+    double total = automaticExpense ?? 0.0;
+    if (automaticExpenses != null) {
+      for (var e in automaticExpenses!) {
+        total += e.amount;
+      }
+    }
+    return total;
+  }
 
   double get durationHours {
     // Use seconds for high precision, especially for short timer-based shifts
@@ -75,6 +94,8 @@ class Shift extends HiveObject {
   }
 
   double calculateTotalPay(double currentHourlyRate) {
-    return (netHours * effectiveHourlyRate(currentHourlyRate)) + tips;
+    return (netHours * effectiveHourlyRate(currentHourlyRate)) +
+        tips -
+        totalAutomaticExpenses;
   }
 }

@@ -290,15 +290,27 @@ class AppTheme {
       ),
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) return primary;
-          return null;
+          if (states.contains(WidgetState.selected)) return Colors.white;
+          if (states.contains(WidgetState.disabled)) {
+            return isDark ? Colors.white24 : Colors.black12;
+          }
+          // Neutral visible thumb for unselected state
+          return isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569);
         }),
         trackColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) {
-            return primary.withValues(alpha: 0.35);
+          if (states.contains(WidgetState.selected)) return primaryDark;
+          if (states.contains(WidgetState.disabled)) {
+            return isDark ? Colors.white10 : Colors.black12;
           }
-          return null;
+          // Clearly visible background for the track
+          return isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1);
         }),
+        trackOutlineColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) return primaryDark;
+          // Distinct outline even when unselected
+          return isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8);
+        }),
+        trackOutlineWidth: const WidgetStatePropertyAll(1.5),
       ),
       sliderTheme: SliderThemeData(
         activeTrackColor: primary,

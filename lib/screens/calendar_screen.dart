@@ -380,6 +380,26 @@ class _CalendarShiftTile extends StatelessWidget {
                     ),
                   ),
                 ),
+              if (shift.totalAutomaticExpenses > 0)
+                Container(
+                  margin: const EdgeInsets.only(top: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 1,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppTheme.expense.withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    "-${UIUtils.formatCurrency(shift.totalAutomaticExpenses)}",
+                    style: const TextStyle(
+                      fontSize: 10,
+                      color: AppTheme.expenseSoft,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
             ],
           ),
         ),

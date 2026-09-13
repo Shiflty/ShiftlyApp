@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:shiftly/models/automatic_expense.dart';
 import 'package:shiftly/models/job_type.dart';
 import 'package:shiftly/models/wage_entry.dart';
 import 'package:shiftly/providers/settings_provider.dart';
 import 'package:shiftly/providers/shift_provider.dart';
 import 'package:shiftly/screens/home_screen.dart';
 import 'package:shiftly/services/notification_service.dart';
+import 'package:shiftly/theme/app_theme.dart';
 import 'package:shiftly/utils/ui_utils.dart';
 import 'package:shiftly/widgets/app_icon.dart';
 import 'package:uuid/uuid.dart';
@@ -22,11 +24,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
 
-  // Break State
+  // State
   late double _paidMinutes;
   late double _unpaidMinutes;
   late bool _remindersEnabled;
   late double _reminderHours;
+  late bool _autoExpenseEnabled;
+  final List<TextEditingController> _autoAmountControllers = [];
+  final List<TextEditingController> _autoDescControllers = [];
 
   @override
   void initState() {
@@ -36,16 +41,34 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     _unpaidMinutes = settings.unpaidBreakDurationMinutes;
     _remindersEnabled = settings.shiftRemindersEnabled;
     _reminderHours = settings.shiftReminderDurationHours;
+    _autoExpenseEnabled = settings.automaticExpenseEnabled;
+
+    for (var e in settings.defaultAutomaticExpenses) {
+      _autoAmountControllers.add(
+        TextEditingController(text: e.amount.toStringAsFixed(0)),
+      );
+      _autoDescControllers.add(TextEditingController(text: e.description));
+    }
+    if (_autoAmountControllers.isEmpty) {
+      _autoAmountControllers.add(TextEditingController(text: '20'));
+      _autoDescControllers.add(TextEditingController(text: 'נסיעות'));
+    }
   }
 
   @override
   void dispose() {
     _pageController.dispose();
+    for (var c in _autoAmountControllers) {
+      c.dispose();
+    }
+    for (var c in _autoDescControllers) {
+      c.dispose();
+    }
     super.dispose();
   }
 
   void _nextPage() {
-    if (_currentPage < 3) {
+    if (_currentPage < 4) {
       _pageController.nextPage(
         duration: const Duration(milliseconds: 400),
         curve: Curves.easeInOut,
@@ -57,11 +80,42 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   void _finishOnboarding() async {
     final settings = context.read<SettingsProvider>();
+
+    List<AutomaticExpense> expenses = [];
+    if (_autoExpenseEnabled) {
+      for (int i = 0; i < _autoAmountControllers.length; i++) {
+        final amountText = _autoAmountControllers[i].text.trim();
+        final desc = _autoDescControllers[i].text.trim();
+
+        if (amountText.isEmpty && desc.isEmpty) continue;
+
+        final amount = double.tryParse(amountText);
+        if (desc.isEmpty) {
+          UIUtils.showSnackBar(
+            context,
+            'נא להזין תיאור לכל ההוצאות הקבועות',
+            isError: true,
+          );
+          return;
+        }
+        if (amount == null || amount <= 0) {
+          UIUtils.showSnackBar(
+            context,
+            'סכום ההוצאה "$desc" חייב להיות מספר גדול מ-0',
+            isError: true,
+          );
+          return;
+        }
+        expenses.add(AutomaticExpense(description: desc, amount: amount));
+      }
+    }
+
     await settings.setBreakDurations(_paidMinutes, _unpaidMinutes);
     await settings.setShiftRemindersEnabled(_remindersEnabled);
     await settings.setShiftReminderDurationHours(_reminderHours);
+    await settings.setAutomaticExpenseEnabled(_autoExpenseEnabled);
+    await settings.updateDefaultAutomaticExpenses(expenses);
 
-    // iOS requires an explicit permission prompt; trigger when reminders are on.
     if (_remindersEnabled) {
       await NotificationService.requestPermissions();
     }
@@ -89,8 +143,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   _buildPage(child: _buildWelcomePage()),
                   _buildPage(child: _buildBreakSettingsPage()),
                   _buildPage(child: _buildReminderSettingsPage()),
+                  _buildPage(child: _buildAutoExpensePage()),
                   _buildJobTypesPage(),
-                  // Special structure for job types (ListView)
                 ],
               ),
             ),
@@ -166,7 +220,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         ),
         const SizedBox(height: 16),
         const Text(
-          'כמה זמן נמשכת הפסקה בדרך כלל? (ניתן לשנות בכל משמרת)',
+          'כמה זמן נמשכת הפסקה בדרך כלל?',
           style: TextStyle(
             fontSize: 16,
             color: Colors.grey,
@@ -224,14 +278,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             'הפעל תזכורות',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
           ),
-          subtitle: const Text('תזכורת אוטומטית לפני כל משמרת'),
           value: _remindersEnabled,
-          onChanged: (val) async {
-            setState(() => _remindersEnabled = val);
-            if (val) {
-              await NotificationService.requestPermissions();
-            }
-          },
+          onChanged: (val) => setState(() => _remindersEnabled = val),
+          activeThumbColor: AppTheme.primaryDark,
+          activeTrackColor: AppTheme.primary.withValues(alpha: 0.35),
         ),
         if (_remindersEnabled) ...[
           const SizedBox(height: 32),
@@ -241,12 +291,100 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             min: 0.5,
             max: 24,
             divisions: 47,
-            // 0.5 steps
             displaySuffix: 'שעות',
             onChanged: (val) => setState(() => _reminderHours = val),
           ),
         ],
       ],
+    );
+  }
+
+  Widget _buildAutoExpensePage() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Icon(Icons.auto_fix_high_rounded, size: 64, color: Colors.blue),
+        const SizedBox(height: 24),
+        const Text(
+          'הוצאות קבועות',
+          style: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.bold,
+            fontFamily: 'Arial',
+          ),
+        ),
+        const SizedBox(height: 16),
+        const Text(
+          'האם יש לך הוצאות קבועות בכל משמרת? (למשל נסיעות)',
+          style: TextStyle(
+            fontSize: 16,
+            color: Colors.grey,
+            fontFamily: 'Arial',
+          ),
+        ),
+        const SizedBox(height: 40),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: const Text(
+            'הפעל הוצאות אוטומטיות',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+          ),
+          value: _autoExpenseEnabled,
+          onChanged: (val) => setState(() => _autoExpenseEnabled = val),
+          activeThumbColor: AppTheme.primaryDark,
+          activeTrackColor: AppTheme.primary.withValues(alpha: 0.35),
+        ),
+        if (_autoExpenseEnabled) ...[
+          const SizedBox(height: 24),
+          ...List.generate(
+            _autoAmountControllers.length,
+            (index) => _buildAutoExpenseRow(index),
+          ),
+          TextButton.icon(
+            onPressed: () => setState(() {
+              _autoAmountControllers.add(TextEditingController(text: '0'));
+              _autoDescControllers.add(TextEditingController(text: ''));
+            }),
+            icon: const Icon(Icons.add_circle_outline_rounded),
+            label: const Text('הוסף הוצאה'),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildAutoExpenseRow(int index) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 2,
+            child: TextField(
+              controller: _autoDescControllers[index],
+              decoration: const InputDecoration(labelText: 'תיאור'),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            flex: 1,
+            child: TextField(
+              controller: _autoAmountControllers[index],
+              decoration: const InputDecoration(labelText: '₪'),
+              keyboardType: TextInputType.number,
+            ),
+          ),
+          if (_autoAmountControllers.length > 1)
+            IconButton(
+              icon: const Icon(Icons.remove_circle_outline, color: Colors.red),
+              onPressed: () => setState(() {
+                _autoAmountControllers.removeAt(index);
+                _autoDescControllers.removeAt(index);
+              }),
+            ),
+        ],
+      ),
     );
   }
 
@@ -370,37 +508,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           color: Colors.red,
                         ),
                         onPressed: () async {
-                          final provider = context.read<ShiftProvider>();
-                          final name = job.name;
-
                           final confirmed = await UIUtils.showConfirmDialog(
                             context: context,
                             title: 'מחיקת תפקיד',
-                            content:
-                                'האם אתה בטוח שברצונך למחוק את התפקיד "$name"?',
+                            content: 'האם למחוק את התפקיד "${job.name}"?',
                             isDestructive: true,
                             confirmLabel: 'מחק',
                           );
-
-                          if (confirmed != true) return;
-
-                          if (!context.mounted) return;
-
-                          provider.deleteJobType(job.id);
-
-                          final messenger = ScaffoldMessenger.of(context);
-                          messenger.clearSnackBars();
-                          messenger.showSnackBar(
-                            SnackBar(
-                              content: Text('תפקיד "$name" נמחק'),
-                              duration: const Duration(milliseconds: 4500),
-                              behavior: SnackBarBehavior.floating,
-                              action: SnackBarAction(
-                                label: 'ביטול',
-                                onPressed: () => provider.addJobType(job),
-                              ),
-                            ),
-                          );
+                          if (confirmed == true && context.mounted) {
+                            context.read<ShiftProvider>().deleteJobType(job.id);
+                          }
                         },
                       ),
                     ],
@@ -420,50 +537,40 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       text: job.getRateForDate(DateTime.now()).toString(),
     );
     DateTime effectiveDate = DateTime.now();
-
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
           title: const Text('ערוך סוג משמרת'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: nameController,
-                  decoration: const InputDecoration(labelText: 'שם התפקיד'),
-                ),
-                TextField(
-                  controller: rateController,
-                  decoration: const InputDecoration(labelText: 'שכר לשעה'),
-                  keyboardType: TextInputType.number,
-                ),
-                const SizedBox(height: 8),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: const Text(
-                    'תאריך תחילה',
-                    style: TextStyle(fontSize: 14),
-                  ),
-                  subtitle: Text(
-                    DateFormat('dd/MM/yyyy').format(effectiveDate),
-                  ),
-                  trailing: const Icon(Icons.calendar_today_rounded, size: 20),
-                  onTap: () async {
-                    final picked = await showDatePicker(
-                      context: context,
-                      initialDate: effectiveDate,
-                      firstDate: DateTime(2020),
-                      lastDate: DateTime(2100),
-                    );
-                    if (picked != null) {
-                      setDialogState(() => effectiveDate = picked);
-                    }
-                  },
-                ),
-              ],
-            ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(labelText: 'שם התפקיד'),
+              ),
+              TextField(
+                controller: rateController,
+                decoration: const InputDecoration(labelText: 'שכר לשעה'),
+                keyboardType: TextInputType.number,
+              ),
+              ListTile(
+                title: const Text('תאריך תחילה'),
+                subtitle: Text(DateFormat('dd/MM/yyyy').format(effectiveDate)),
+                trailing: const Icon(Icons.calendar_today_rounded),
+                onTap: () async {
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: effectiveDate,
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime(2100),
+                  );
+                  if (picked != null) {
+                    setDialogState(() => effectiveDate = picked);
+                  }
+                },
+              ),
+            ],
           ),
           actions: [
             TextButton(
@@ -475,37 +582,23 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 final name = nameController.text.trim();
                 final rate =
                     double.tryParse(rateController.text) ?? job.hourlyRate;
-
                 if (name.isEmpty) return;
-
                 final confirmed = await UIUtils.showConfirmDialog(
                   context: context,
                   title: 'עדכון תפקיד',
                   content:
-                      'האם לעדכן את התפקיד "$name" עם שכר של ${UIUtils.formatCurrency(rate)} החל מיום ${DateFormat('dd/MM/yyyy').format(effectiveDate)}?',
+                      'האם לעדכן את "$name" החל מיום ${DateFormat('dd/MM/yyyy').format(effectiveDate)}?',
                 );
-
-                if (confirmed != true) return;
-
-                if (!context.mounted) return;
-
-                final history = List<WageEntry>.from(job.wageHistory ?? []);
-                history.removeWhere(
-                  (e) =>
-                      e.startDate.year == effectiveDate.year &&
-                      e.startDate.month == effectiveDate.month &&
-                      e.startDate.day == effectiveDate.day,
-                );
-                history.add(
-                  WageEntry(startDate: effectiveDate, hourlyRate: rate),
-                );
-                history.sort((a, b) => a.startDate.compareTo(b.startDate));
-
-                final updated = job.copyWith(name: name, wageHistory: history);
-                updated.syncCurrentRate();
-
+                if (confirmed != true || !context.mounted) return;
+                final history = List<WageEntry>.from(job.wageHistory ?? [])
+                  ..removeWhere((e) => isSameDay(e.startDate, effectiveDate))
+                  ..add(WageEntry(startDate: effectiveDate, hourlyRate: rate))
+                  ..sort((a, b) => a.startDate.compareTo(b.startDate));
+                final updated = job.copyWith(name: name, wageHistory: history)
+                  ..syncCurrentRate();
                 await context.read<ShiftProvider>().updateJobType(updated);
-                if (context.mounted) Navigator.pop(context);
+                if (!context.mounted) return;
+                Navigator.pop(context);
               },
               child: const Text('שמור'),
             ),
@@ -518,7 +611,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   void _addNewJobType() {
     final nameController = TextEditingController();
     final rateController = TextEditingController();
-
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -546,57 +638,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             onPressed: () async {
               final name = nameController.text.trim();
               final rate = double.tryParse(rateController.text) ?? 0.0;
-              final provider = context.read<ShiftProvider>();
-              final messenger = ScaffoldMessenger.of(context);
-
-              if (name.isEmpty) {
-                messenger.hideCurrentSnackBar();
-                messenger.showSnackBar(
-                  const SnackBar(
-                    content: Text('נא להזין שם לתפקיד'),
-                    duration: Duration(milliseconds: 4500),
-                  ),
-                );
-                return;
-              }
-
-              final exists = provider.jobTypes.any(
-                (j) => j.name.toLowerCase() == name.toLowerCase(),
-              );
-
-              if (exists) {
-                messenger.hideCurrentSnackBar();
-                messenger.showSnackBar(
-                  const SnackBar(
-                    content: Text('תפקיד בשם זה כבר קיים'),
-                    duration: Duration(milliseconds: 4500),
-                  ),
-                );
-                return;
-              }
-
-              if (rate < 0) {
-                messenger.hideCurrentSnackBar();
-                messenger.showSnackBar(
-                  const SnackBar(
-                    content: Text('השכר לא יכול להיות שלילי'),
-                    duration: Duration(milliseconds: 4500),
-                  ),
-                );
-                return;
-              }
-
-              final confirmed = await UIUtils.showConfirmDialog(
-                context: context,
-                title: 'הוספת תפקיד',
-                content:
-                    'האם לשמור את התפקיד "$name" עם שכר של ${UIUtils.formatCurrency(rate)}?',
-              );
-
-              if (confirmed != true) return;
-
-              if (!context.mounted) return;
-
+              if (name.isEmpty) return;
               final newJob = JobType(
                 id: const Uuid().v4(),
                 name: name,
@@ -604,9 +646,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 wageHistory: [
                   WageEntry(startDate: DateTime.now(), hourlyRate: rate),
                 ],
-              );
-              newJob.syncCurrentRate();
-              provider.addJobType(newJob);
+              )..syncCurrentRate();
+              context.read<ShiftProvider>().addJobType(newJob);
               Navigator.pop(context);
             },
             child: const Text('הוסף'),
@@ -624,7 +665,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         children: [
           Row(
             children: List.generate(
-              4,
+              5,
               (index) => Container(
                 margin: const EdgeInsets.symmetric(horizontal: 4),
                 width: 12,
@@ -640,24 +681,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ),
           ElevatedButton(
             onPressed: _nextPage,
-            style: ElevatedButton.styleFrom(
-              minimumSize: const Size(0, 52),
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: Text(
-              _currentPage == 3 ? 'בוא נתחיל!' : 'המשך',
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'Arial',
-              ),
-            ),
+            child: Text(_currentPage == 4 ? 'בוא נתחיל!' : 'המשך'),
           ),
         ],
       ),
     );
   }
+
+  bool isSameDay(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
 }

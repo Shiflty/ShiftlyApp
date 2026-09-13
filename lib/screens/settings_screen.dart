@@ -289,6 +289,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       if (!context.mounted) return;
                       context.read<ShiftProvider>().refreshAllReminders();
                     },
+                    activeThumbColor: AppTheme.primaryDark,
+                    activeTrackColor: AppTheme.primary.withValues(alpha: 0.35),
                   ),
                   const Divider(height: 1, indent: 56),
                   Padding(

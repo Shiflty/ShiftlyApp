@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/models/automatic_expense.dart';
 import 'package:shiftly/services/persistence_service.dart';
 
 class SettingsProvider with ChangeNotifier {
@@ -14,6 +15,8 @@ class SettingsProvider with ChangeNotifier {
   bool _hasCompletedOnboarding = false;
   bool _shiftRemindersEnabled = true;
   double _shiftReminderDurationHours = 4.0;
+  bool _automaticExpenseEnabled = false;
+  List<AutomaticExpense> _defaultAutomaticExpenses = [];
 
   ThemeMode get themeMode => _themeMode;
 
@@ -26,6 +29,11 @@ class SettingsProvider with ChangeNotifier {
   bool get shiftRemindersEnabled => _shiftRemindersEnabled;
 
   double get shiftReminderDurationHours => _shiftReminderDurationHours;
+
+  bool get automaticExpenseEnabled => _automaticExpenseEnabled;
+
+  List<AutomaticExpense> get defaultAutomaticExpenses =>
+      _defaultAutomaticExpenses;
 
   void _loadSettings() {
     final box = _persistence.settingsBox;
@@ -51,6 +59,17 @@ class SettingsProvider with ChangeNotifier {
       'shiftReminderDurationHours',
       defaultValue: 4.0,
     );
+    _automaticExpenseEnabled = box.get(
+      'automaticExpenseEnabled',
+      defaultValue: false,
+    );
+
+    final List? storedExpenses = box.get('defaultAutomaticExpenses');
+    if (storedExpenses != null) {
+      _defaultAutomaticExpenses = List<AutomaticExpense>.from(storedExpenses);
+    } else {
+      _defaultAutomaticExpenses = [];
+    }
     notifyListeners();
   }
 
@@ -80,6 +99,20 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> setAutomaticExpenseEnabled(bool enabled) async {
+    _automaticExpenseEnabled = enabled;
+    await _persistence.settingsBox.put('automaticExpenseEnabled', enabled);
+    notifyListeners();
+  }
+
+  Future<void> updateDefaultAutomaticExpenses(
+    List<AutomaticExpense> expenses,
+  ) async {
+    _defaultAutomaticExpenses = expenses;
+    await _persistence.settingsBox.put('defaultAutomaticExpenses', expenses);
+    notifyListeners();
+  }
+
   Future<void> completeOnboarding() async {
     _hasCompletedOnboarding = true;
     await _persistence.settingsBox.put('hasCompletedOnboarding', true);
@@ -93,6 +126,8 @@ class SettingsProvider with ChangeNotifier {
     _hasCompletedOnboarding = false;
     _shiftRemindersEnabled = true;
     _shiftReminderDurationHours = 4.0;
+    _automaticExpenseEnabled = false;
+    _defaultAutomaticExpenses = [];
     notifyListeners();
   }
 }

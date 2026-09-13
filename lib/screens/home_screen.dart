@@ -33,6 +33,7 @@ class HomeScreen extends StatelessWidget {
       grandTotalNetHours += shift.netHours;
       grandTotalBaseSalary += shift.netHours * rate;
       grandTotalTips += shift.tips;
+      grandTotalExpenses += shift.totalAutomaticExpenses;
     }
 
     for (var expense in shiftProvider.expenses) {
@@ -40,11 +41,17 @@ class HomeScreen extends StatelessWidget {
     }
 
     if (timerProvider.startTime != null) {
+      final settings = context.read<SettingsProvider>();
       final job = shiftProvider.getJobTypeById(timerProvider.jobTypeId ?? "");
       final rate = job?.getRateForDate(timerProvider.startTime!) ?? 40.22;
       grandTotalNetHours += timerProvider.netMinutes / 60.0;
       grandTotalBaseSalary += (timerProvider.netMinutes / 60.0) * rate;
       grandTotalTips += timerProvider.tips;
+      if (settings.automaticExpenseEnabled) {
+        for (var e in settings.defaultAutomaticExpenses) {
+          grandTotalExpenses += e.amount;
+        }
+      }
     }
 
     return Scaffold(
@@ -554,6 +561,7 @@ class _MonthExpansionSection extends StatelessWidget {
       totalNetHours += shift.netHours;
       totalBaseSalary += shift.netHours * rate;
       totalTips += shift.tips;
+      totalMonthExpenses += shift.totalAutomaticExpenses;
     }
 
     final allExpenses = shiftProvider.expensesGroupedByMonth[monthKey] ?? [];
@@ -569,11 +577,17 @@ class _MonthExpansionSection extends StatelessWidget {
     if (timerProvider.startTime != null &&
         timerProvider.startTime!.year == year &&
         timerProvider.startTime!.month == date.month) {
+      final settings = context.read<SettingsProvider>();
       final job = shiftProvider.getJobTypeById(timerProvider.jobTypeId ?? "");
       final rate = job?.getRateForDate(timerProvider.startTime!) ?? 40.22;
       totalNetHours += timerProvider.netMinutes / 60.0;
       totalBaseSalary += (timerProvider.netMinutes / 60.0) * rate;
       totalTips += timerProvider.tips;
+      if (settings.automaticExpenseEnabled) {
+        for (var e in settings.defaultAutomaticExpenses) {
+          totalMonthExpenses += e.amount;
+        }
+      }
     }
 
     final net = totalBaseSalary + totalTips - totalMonthExpenses;
@@ -908,6 +922,13 @@ class _ShiftTile extends StatelessWidget {
                                       "${(shift.unpaidBreakMinutes ?? settings.unpaidBreakDurationMinutes).toStringAsFixed(0)}' הפסקה",
                                   icon: Icons.coffee_outlined,
                                   color: AppTheme.warningSoft,
+                                ),
+                              if (shift.totalAutomaticExpenses > 0)
+                                _ShiftTag(
+                                  label:
+                                      '-${UIUtils.formatCurrency(shift.totalAutomaticExpenses)}',
+                                  icon: Icons.money_off_rounded,
+                                  color: AppTheme.expense,
                                 ),
                             ],
                           ),
