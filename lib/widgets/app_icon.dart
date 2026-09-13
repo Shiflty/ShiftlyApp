@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 
 class EssentialWorkIcon extends StatelessWidget {
   final double size;
+  final String? symbol;
 
-  const EssentialWorkIcon({super.key, this.size = 180.0});
+  const EssentialWorkIcon({super.key, this.size = 180.0, this.symbol});
 
   @override
   Widget build(BuildContext context) {
@@ -21,12 +22,18 @@ class EssentialWorkIcon extends StatelessWidget {
           ),
         ],
       ),
-      child: CustomPaint(painter: _EssentialWorkIconPainter()),
+      child: CustomPaint(
+        painter: _EssentialWorkIconPainter(symbol: symbol ?? '₪'),
+      ),
     );
   }
 }
 
 class _EssentialWorkIconPainter extends CustomPainter {
+  final String symbol;
+
+  _EssentialWorkIconPainter({required this.symbol});
+
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
@@ -62,10 +69,10 @@ class _EssentialWorkIconPainter extends CustomPainter {
       handsPaint,
     );
 
-    // 3. תגית שכר (Currency Symbol Overlay - ₪)
+    // 3. תגית שכר (Currency Symbol Overlay)
     final textPainter = TextPainter(
       text: TextSpan(
-        text: '₪',
+        text: symbol,
         style: TextStyle(
           color: const Color(0xFFFACC15), // זהב-שכר
           fontSize: size.width * 0.28,
@@ -97,5 +104,6 @@ class _EssentialWorkIconPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _EssentialWorkIconPainter oldDelegate) =>
+      oldDelegate.symbol != symbol;
 }

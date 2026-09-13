@@ -445,6 +445,8 @@ class _AddShiftScreenState extends State<AddShiftScreen>
   Widget _buildTimerForm(List<JobType> jobs) {
     final timerProvider = context.watch<TimerProvider>();
     final shiftProvider = context.watch<ShiftProvider>();
+    final settings = context.watch<SettingsProvider>();
+    final symbol = settings.currencySymbol;
     final isRunning = timerProvider.isRunning;
     final isOnBreak = timerProvider.isOnBreak;
     final isReviewMode = timerProvider.startTime != null && !isRunning;
@@ -585,7 +587,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
           ),
           const SizedBox(height: AppTheme.spaceXs),
           Text(
-            UIUtils.formatCurrency(livePay),
+            UIUtils.formatCurrency(livePay, symbol: symbol),
             style: AppTheme.monoNumber.copyWith(
               fontSize: 28,
               color: livePay < 0 ? AppTheme.expense : AppTheme.primaryDark,
@@ -674,9 +676,9 @@ class _AddShiftScreenState extends State<AddShiftScreen>
                   },
                 ),
                 const SizedBox(height: AppTheme.spaceMd),
-                _buildTipsSection(_timerTipControllers),
+                _buildTipsSection(_timerTipControllers, symbol),
                 const SizedBox(height: AppTheme.spaceMd),
-                _buildAutoExpensesSection(),
+                _buildAutoExpensesSection(symbol),
               ],
             ),
           ),
@@ -802,6 +804,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
 
   Widget _buildManualForm(List<JobType> jobs) {
     final settings = context.read<SettingsProvider>();
+    final symbol = settings.currencySymbol;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(
@@ -927,9 +930,9 @@ class _AddShiftScreenState extends State<AddShiftScreen>
                   onChanged: (val) => setState(() => _selectedJobTypeId = val),
                 ),
                 const SizedBox(height: AppTheme.spaceMd),
-                _buildTipsSection(_tipControllers),
+                _buildTipsSection(_tipControllers, symbol),
                 const SizedBox(height: AppTheme.spaceMd),
-                _buildAutoExpensesSection(),
+                _buildAutoExpensesSection(symbol),
               ],
             ),
           ),
@@ -1051,7 +1054,10 @@ class _AddShiftScreenState extends State<AddShiftScreen>
     );
   }
 
-  Widget _buildTipsSection(List<TextEditingController> controllers) {
+  Widget _buildTipsSection(
+    List<TextEditingController> controllers,
+    String symbol,
+  ) {
     final total = _calculateTotalTips(controllers);
 
     return Column(
@@ -1068,7 +1074,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
-                'סה"כ ${UIUtils.formatCurrency(total)}',
+                'סה"כ ${UIUtils.formatCurrency(total, symbol: symbol)}',
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   color: AppTheme.profitSoft,
@@ -1147,7 +1153,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
     );
   }
 
-  Widget _buildAutoExpensesSection() {
+  Widget _buildAutoExpensesSection(String symbol) {
     double total = 0;
     for (var c in _autoExpenseAmountControllers) {
       total += double.tryParse(c.text) ?? 0.0;
@@ -1170,7 +1176,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
-                'סה"כ -${UIUtils.formatCurrency(total)}',
+                'סה"כ -${UIUtils.formatCurrency(total, symbol: symbol)}',
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   color: AppTheme.expenseSoft,
@@ -1199,7 +1205,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
                   flex: 1,
                   child: TextField(
                     controller: _autoExpenseAmountControllers[index],
-                    decoration: const InputDecoration(labelText: '₪'),
+                    decoration: InputDecoration(labelText: symbol),
                     keyboardType: TextInputType.number,
                     onChanged: (_) => setState(() {}),
                   ),

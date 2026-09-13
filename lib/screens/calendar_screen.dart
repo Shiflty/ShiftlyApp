@@ -253,6 +253,7 @@ class _CalendarShiftTile extends StatelessWidget {
     final settings = context.watch<SettingsProvider>();
     final job = shiftProvider.getJobTypeById(shift.jobTypeId);
     final rate = shift.hourlyRate ?? job?.getRateForDate(shift.date) ?? 40.22;
+    final symbol = settings.currencySymbol;
     final pay = shift.calculateTotalPay(rate);
 
     String breakInfo = "";
@@ -350,7 +351,7 @@ class _CalendarShiftTile extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                UIUtils.formatCurrency(pay),
+                UIUtils.formatCurrency(pay, symbol: symbol),
                 style: UIUtils.getCurrencyStyle(
                   context,
                   pay,
@@ -372,7 +373,7 @@ class _CalendarShiftTile extends StatelessWidget {
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
-                    "+${UIUtils.formatCurrency(shift.tips)}",
+                    "+${UIUtils.formatCurrency(shift.tips, symbol: symbol)}",
                     style: TextStyle(
                       fontSize: 10,
                       color: Colors.green.shade700,
@@ -392,7 +393,7 @@ class _CalendarShiftTile extends StatelessWidget {
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
-                    "-${UIUtils.formatCurrency(shift.totalAutomaticExpenses)}",
+                    "-${UIUtils.formatCurrency(shift.totalAutomaticExpenses, symbol: symbol)}",
                     style: const TextStyle(
                       fontSize: 10,
                       color: AppTheme.expenseSoft,

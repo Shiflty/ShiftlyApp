@@ -17,6 +17,7 @@ class SettingsProvider with ChangeNotifier {
   double _shiftReminderDurationHours = 4.0;
   bool _automaticExpenseEnabled = false;
   List<AutomaticExpense> _defaultAutomaticExpenses = [];
+  String _currencySymbol = '₪';
 
   ThemeMode get themeMode => _themeMode;
 
@@ -34,6 +35,8 @@ class SettingsProvider with ChangeNotifier {
 
   List<AutomaticExpense> get defaultAutomaticExpenses =>
       _defaultAutomaticExpenses;
+
+  String get currencySymbol => _currencySymbol;
 
   void _loadSettings() {
     final box = _persistence.settingsBox;
@@ -63,6 +66,7 @@ class SettingsProvider with ChangeNotifier {
       'automaticExpenseEnabled',
       defaultValue: false,
     );
+    _currencySymbol = box.get('currencySymbol', defaultValue: '₪');
 
     final List? storedExpenses = box.get('defaultAutomaticExpenses');
     if (storedExpenses != null) {
@@ -105,6 +109,12 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> setCurrencySymbol(String symbol) async {
+    _currencySymbol = symbol;
+    await _persistence.settingsBox.put('currencySymbol', symbol);
+    notifyListeners();
+  }
+
   Future<void> updateDefaultAutomaticExpenses(
     List<AutomaticExpense> expenses,
   ) async {
@@ -128,6 +138,7 @@ class SettingsProvider with ChangeNotifier {
     _shiftReminderDurationHours = 4.0;
     _automaticExpenseEnabled = false;
     _defaultAutomaticExpenses = [];
+    _currencySymbol = '₪';
     notifyListeners();
   }
 }

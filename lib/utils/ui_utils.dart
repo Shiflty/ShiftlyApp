@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:shiftly/theme/app_theme.dart';
 
 class UIUtils {
-  /// Formats a double value as currency with the ₪ symbol.
+  /// Formats a double value as currency with the provided [symbol] (defaults to ₪).
   /// Example: 100.5 -> "₪100.50"
   /// Handles RTL negative formatting: "-₪50.00"
-  static String formatCurrency(double amount) {
+  static String formatCurrency(double amount, {String symbol = '₪'}) {
     final formatted = amount.abs().toStringAsFixed(2);
     if (amount < 0) {
-      return '\u200E-₪$formatted';
+      return '\u200E-$symbol$formatted';
     }
-    return '₪$formatted';
+    return '$symbol$formatted';
   }
 
   /// Returns a style for currency text using semantic profit/expense colors.

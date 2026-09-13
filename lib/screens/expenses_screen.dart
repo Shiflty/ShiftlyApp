@@ -82,6 +82,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
   }
 
   void _showExpenseDialog(BuildContext context, [Expense? expense]) {
+    final symbol = context.read<SettingsProvider>().currencySymbol;
     final descriptionController = TextEditingController(
       text: expense?.description ?? '',
     );
@@ -128,9 +129,9 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                 const SizedBox(height: 12),
                 TextField(
                   controller: amountController,
-                  decoration: const InputDecoration(
-                    labelText: 'סכום (₪)',
-                    prefixIcon: Icon(Icons.sell_rounded),
+                  decoration: InputDecoration(
+                    labelText: 'סכום ($symbol)',
+                    prefixIcon: const Icon(Icons.sell_rounded),
                   ),
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
@@ -171,7 +172,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                   context: context,
                   title: expense == null ? 'הוספת הוצאה' : 'עדכון הוצאה',
                   content:
-                      'האם לשמור את ההוצאה "$desc" בסך ${UIUtils.formatCurrency(amount)}?',
+                      'האם לשמור את ההוצאה "$desc" בסך ${UIUtils.formatCurrency(amount, symbol: symbol)}?',
                 );
 
                 if (confirmed != true || !context.mounted) return;
@@ -256,7 +257,10 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                         const Divider(height: AppTheme.spaceLg),
                         ...List.generate(
                           _autoAmountControllers.length,
-                          (index) => _buildAutoExpenseRow(index),
+                          (index) => _buildAutoExpenseRow(
+                            index,
+                            settings.currencySymbol,
+                          ),
                         ),
                         TextButton.icon(
                           onPressed: () => setState(() {
@@ -322,7 +326,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     );
   }
 
-  Widget _buildAutoExpenseRow(int index) {
+  Widget _buildAutoExpenseRow(int index, String symbol) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
       child: Row(
@@ -342,7 +346,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
             flex: 1,
             child: TextField(
               controller: _autoAmountControllers[index],
-              decoration: const InputDecoration(labelText: '₪'),
+              decoration: InputDecoration(labelText: symbol),
               keyboardType: TextInputType.number,
             ),
           ),
@@ -386,6 +390,7 @@ class _MonthExpenseSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final symbol = context.watch<SettingsProvider>().currencySymbol;
     final date = DateTime.parse("$monthKey-01");
     final monthName = DateFormat.MMMM('he_IL').format(date);
     final total = expenses.fold<double>(0, (sum, e) => sum + e.amount);
@@ -405,7 +410,7 @@ class _MonthExpenseSection extends StatelessWidget {
                 ),
               ),
               Text(
-                'סה"כ: ${UIUtils.formatCurrency(total)}',
+                'סה"כ: ${UIUtils.formatCurrency(total, symbol: symbol)}',
                 style: const TextStyle(
                   fontWeight: FontWeight.w600,
                   color: AppTheme.expenseSoft,
@@ -415,7 +420,8 @@ class _MonthExpenseSection extends StatelessWidget {
           ),
         ),
         ...expenses.map(
-          (e) => _ExpenseTile(expense: e, onEdit: () => onEdit(e)),
+          (e) =>
+              _ExpenseTile(expense: e, onEdit: () => onEdit(e), symbol: symbol),
         ),
         const Divider(),
       ],
@@ -426,8 +432,13 @@ class _MonthExpenseSection extends StatelessWidget {
 class _ExpenseTile extends StatelessWidget {
   final Expense expense;
   final VoidCallback onEdit;
+  final String symbol;
 
-  const _ExpenseTile({required this.expense, required this.onEdit});
+  const _ExpenseTile({
+    required this.expense,
+    required this.onEdit,
+    required this.symbol,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -452,7 +463,7 @@ class _ExpenseTile extends StatelessWidget {
         context: context,
         title: 'מחיקת הוצאה',
         content:
-            'האם למחוק את "${expense.description}" בסך ${UIUtils.formatCurrency(expense.amount)}?',
+            'האם למחוק את "${expense.description}" בסך ${UIUtils.formatCurrency(expense.amount, symbol: symbol)}?',
         isDestructive: true,
         confirmLabel: 'מחק',
       ),
@@ -490,7 +501,7 @@ class _ExpenseTile extends StatelessWidget {
           ),
           subtitle: Text(DateFormat('dd/MM/yyyy').format(expense.date)),
           trailing: Text(
-            UIUtils.formatCurrency(expense.amount),
+            UIUtils.formatCurrency(expense.amount, symbol: symbol),
             style: const TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 16,

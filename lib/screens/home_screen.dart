@@ -20,6 +20,7 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final shiftProvider = context.watch<ShiftProvider>();
     final timerProvider = context.watch<TimerProvider>();
+    final settings = context.watch<SettingsProvider>();
     final groupedShifts = shiftProvider.shiftsGroupedByMonth;
 
     double grandTotalNetHours = 0;
@@ -41,7 +42,6 @@ class HomeScreen extends StatelessWidget {
     }
 
     if (timerProvider.startTime != null) {
-      final settings = context.read<SettingsProvider>();
       final job = shiftProvider.getJobTypeById(timerProvider.jobTypeId ?? "");
       final rate = job?.getRateForDate(timerProvider.startTime!) ?? 40.22;
       grandTotalNetHours += timerProvider.netMinutes / 60.0;
@@ -221,6 +221,7 @@ class _ActiveTimerBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final shiftProvider = context.read<ShiftProvider>();
+    final symbol = context.watch<SettingsProvider>().currencySymbol;
     final job = shiftProvider.getJobTypeById(timer.jobTypeId ?? "");
     final rate = timer.startTime != null
         ? (job?.getRateForDate(timer.startTime!) ?? 40.22)
@@ -298,7 +299,7 @@ class _ActiveTimerBanner extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'זמן: $timeStr  ·  ${UIUtils.formatCurrency(pay)}',
+                    'זמן: $timeStr  ·  ${UIUtils.formatCurrency(pay, symbol: symbol)}',
                     style: TextStyle(
                       color: Theme.of(
                         context,
@@ -334,6 +335,7 @@ class _GrandTotalCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final symbol = context.watch<SettingsProvider>().currencySymbol;
     final net = totalBase + totalTips - totalExpenses;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -424,7 +426,7 @@ class _GrandTotalCard extends StatelessWidget {
                   ),
                   const SizedBox(height: AppTheme.spaceXs),
                   Text(
-                    UIUtils.formatCurrency(net),
+                    UIUtils.formatCurrency(net, symbol: symbol),
                     style: AppTheme.monoNumber.copyWith(
                       color: net < 0 ? const Color(0xFFFECACA) : Colors.white,
                       fontSize: 40,
@@ -454,19 +456,28 @@ class _GrandTotalCard extends StatelessWidget {
                         _VerticalDivider(),
                         _HeaderInfoItem(
                           label: 'בסיס',
-                          value: UIUtils.formatCurrency(totalBase),
+                          value: UIUtils.formatCurrency(
+                            totalBase,
+                            symbol: symbol,
+                          ),
                           amount: totalBase,
                         ),
                         _VerticalDivider(),
                         _HeaderInfoItem(
                           label: 'טיפים',
-                          value: UIUtils.formatCurrency(totalTips),
+                          value: UIUtils.formatCurrency(
+                            totalTips,
+                            symbol: symbol,
+                          ),
                           amount: totalTips,
                         ),
                         _VerticalDivider(),
                         _HeaderInfoItem(
                           label: 'הוצאות',
-                          value: UIUtils.formatCurrency(totalExpenses),
+                          value: UIUtils.formatCurrency(
+                            totalExpenses,
+                            symbol: symbol,
+                          ),
                           amount: -totalExpenses,
                         ),
                       ],
@@ -549,6 +560,8 @@ class _MonthExpansionSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final shiftProvider = context.read<ShiftProvider>();
+    final settings = context.watch<SettingsProvider>();
+    final symbol = settings.currencySymbol;
 
     double totalNetHours = 0;
     double totalBaseSalary = 0;
@@ -577,7 +590,6 @@ class _MonthExpansionSection extends StatelessWidget {
     if (timerProvider.startTime != null &&
         timerProvider.startTime!.year == year &&
         timerProvider.startTime!.month == date.month) {
-      final settings = context.read<SettingsProvider>();
       final job = shiftProvider.getJobTypeById(timerProvider.jobTypeId ?? "");
       final rate = job?.getRateForDate(timerProvider.startTime!) ?? 40.22;
       totalNetHours += timerProvider.netMinutes / 60.0;
@@ -634,7 +646,7 @@ class _MonthExpansionSection extends StatelessWidget {
           subtitle: Padding(
             padding: const EdgeInsets.only(top: 4),
             child: Text(
-              "${UIUtils.formatCurrency(net)} סה\"כ נטו  ·  ${totalNetHours.toStringAsFixed(2)} שעות",
+              "${UIUtils.formatCurrency(net, symbol: symbol)} סה\"כ נטו  ·  ${totalNetHours.toStringAsFixed(2)} שעות",
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ),
@@ -648,26 +660,32 @@ class _MonthExpansionSection extends StatelessWidget {
                   children: [
                     _SummaryItem(
                       label: 'בסיס',
-                      value: UIUtils.formatCurrency(totalBaseSalary),
+                      value: UIUtils.formatCurrency(
+                        totalBaseSalary,
+                        symbol: symbol,
+                      ),
                       amount: totalBaseSalary,
                     ),
                     const VerticalDivider(width: 1, indent: 4, endIndent: 4),
                     _SummaryItem(
                       label: 'טיפים',
-                      value: UIUtils.formatCurrency(totalTips),
+                      value: UIUtils.formatCurrency(totalTips, symbol: symbol),
                       amount: totalTips,
                       accent: AppTheme.profit,
                     ),
                     const VerticalDivider(width: 1, indent: 4, endIndent: 4),
                     _SummaryItem(
                       label: 'הוצאות',
-                      value: UIUtils.formatCurrency(totalMonthExpenses),
+                      value: UIUtils.formatCurrency(
+                        totalMonthExpenses,
+                        symbol: symbol,
+                      ),
                       amount: -totalMonthExpenses,
                     ),
                     const VerticalDivider(width: 1, indent: 4, endIndent: 4),
                     _SummaryItem(
                       label: 'נטו',
-                      value: UIUtils.formatCurrency(net),
+                      value: UIUtils.formatCurrency(net, symbol: symbol),
                       isBold: true,
                       amount: net,
                     ),
@@ -905,7 +923,7 @@ class _ShiftTile extends StatelessWidget {
                               if (shift.tips > 0)
                                 _ShiftTag(
                                   label:
-                                      '+${UIUtils.formatCurrency(shift.tips)}',
+                                      '+${UIUtils.formatCurrency(shift.tips, symbol: settings.currencySymbol)}',
                                   icon: Icons.payments_outlined,
                                   color: AppTheme.profit,
                                 ),
@@ -926,7 +944,7 @@ class _ShiftTile extends StatelessWidget {
                               if (shift.totalAutomaticExpenses > 0)
                                 _ShiftTag(
                                   label:
-                                      '-${UIUtils.formatCurrency(shift.totalAutomaticExpenses)}',
+                                      '-${UIUtils.formatCurrency(shift.totalAutomaticExpenses, symbol: settings.currencySymbol)}',
                                   icon: Icons.money_off_rounded,
                                   color: AppTheme.expense,
                                 ),
@@ -938,7 +956,10 @@ class _ShiftTile extends StatelessWidget {
                   ),
                   const SizedBox(width: AppTheme.spaceXs),
                   Text(
-                    UIUtils.formatCurrency(pay),
+                    UIUtils.formatCurrency(
+                      pay,
+                      symbol: settings.currencySymbol,
+                    ),
                     style: UIUtils.getCurrencyStyle(
                       context,
                       pay,

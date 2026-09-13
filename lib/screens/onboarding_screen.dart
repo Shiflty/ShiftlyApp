@@ -30,6 +30,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   late bool _remindersEnabled;
   late double _reminderHours;
   late bool _autoExpenseEnabled;
+  late String _currencySymbol;
   final List<TextEditingController> _autoAmountControllers = [];
   final List<TextEditingController> _autoDescControllers = [];
 
@@ -42,6 +43,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     _remindersEnabled = settings.shiftRemindersEnabled;
     _reminderHours = settings.shiftReminderDurationHours;
     _autoExpenseEnabled = settings.automaticExpenseEnabled;
+    _currencySymbol = settings.currencySymbol;
 
     for (var e in settings.defaultAutomaticExpenses) {
       _autoAmountControllers.add(
@@ -68,7 +70,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   void _nextPage() {
-    if (_currentPage < 4) {
+    if (_currentPage < 5) {
       _pageController.nextPage(
         duration: const Duration(milliseconds: 400),
         curve: Curves.easeInOut,
@@ -115,6 +117,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     await settings.setShiftReminderDurationHours(_reminderHours);
     await settings.setAutomaticExpenseEnabled(_autoExpenseEnabled);
     await settings.updateDefaultAutomaticExpenses(expenses);
+    await settings.setCurrencySymbol(_currencySymbol);
 
     if (_remindersEnabled) {
       await NotificationService.requestPermissions();
@@ -141,6 +144,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 onPageChanged: (page) => setState(() => _currentPage = page),
                 children: [
                   _buildPage(child: _buildWelcomePage()),
+                  _buildPage(child: _buildCurrencyPage()),
                   _buildPage(child: _buildBreakSettingsPage()),
                   _buildPage(child: _buildReminderSettingsPage()),
                   _buildPage(child: _buildAutoExpensePage()),
@@ -168,7 +172,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const EssentialWorkIcon(size: 120),
+        EssentialWorkIcon(size: 120, symbol: _currencySymbol),
         const SizedBox(height: 40),
         const Text(
           'ברוכים הבאים ל-Shiftly',
@@ -197,6 +201,49 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             fontSize: 16,
             fontWeight: FontWeight.w500,
             fontFamily: 'Arial',
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCurrencyPage() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Icon(Icons.payments_outlined, size: 64, color: Colors.blue),
+        const SizedBox(height: 24),
+        const Text(
+          'בחירת מטבע',
+          style: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.bold,
+            fontFamily: 'Arial',
+          ),
+        ),
+        const SizedBox(height: 16),
+        const Text(
+          'באיזה מטבע תרצה להשתמש להצגת השכר וההוצאות?',
+          style: TextStyle(
+            fontSize: 16,
+            color: Colors.grey,
+            fontFamily: 'Arial',
+          ),
+        ),
+        const SizedBox(height: 40),
+        SizedBox(
+          width: double.infinity,
+          child: SegmentedButton<String>(
+            segments: const [
+              ButtonSegment(value: '₪', label: Text('₪ ILS')),
+              ButtonSegment(value: '\$', label: Text('\$ USD')),
+              ButtonSegment(value: '€', label: Text('€ EUR')),
+              ButtonSegment(value: '£', label: Text('£ GBP')),
+            ],
+            selected: {_currencySymbol},
+            onSelectionChanged: (val) =>
+                setState(() => _currencySymbol = val.first),
           ),
         ),
       ],
@@ -339,7 +386,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           const SizedBox(height: 24),
           ...List.generate(
             _autoAmountControllers.length,
-            (index) => _buildAutoExpenseRow(index),
+            (index) => _buildAutoExpenseRow(index, _currencySymbol),
           ),
           TextButton.icon(
             onPressed: () => setState(() {
@@ -354,7 +401,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  Widget _buildAutoExpenseRow(int index) {
+  Widget _buildAutoExpenseRow(int index, String symbol) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
       child: Row(
@@ -371,7 +418,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             flex: 1,
             child: TextField(
               controller: _autoAmountControllers[index],
-              decoration: const InputDecoration(labelText: '₪'),
+              decoration: InputDecoration(labelText: symbol),
               keyboardType: TextInputType.number,
             ),
           ),
@@ -435,6 +482,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Widget _buildJobTypesPage() {
     final shiftProvider = context.watch<ShiftProvider>();
+    final symbol = context.watch<SettingsProvider>().currencySymbol;
     final jobTypes = shiftProvider.jobTypes;
 
     return Column(
@@ -493,7 +541,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   subtitle: Text(
-                    '${UIUtils.formatCurrency(job.getRateForDate(DateTime.now()))} לשעה',
+                    '${UIUtils.formatCurrency(job.getRateForDate(DateTime.now()), symbol: symbol)} לשעה',
                   ),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -665,7 +713,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         children: [
           Row(
             children: List.generate(
-              5,
+              6,
               (index) => Container(
                 margin: const EdgeInsets.symmetric(horizontal: 4),
                 width: 12,
@@ -681,7 +729,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ),
           ElevatedButton(
             onPressed: _nextPage,
-            child: Text(_currentPage == 4 ? 'בוא נתחיל!' : 'המשך'),
+            child: Text(_currentPage == 5 ? 'בוא נתחיל!' : 'המשך'),
           ),
         ],
       ),

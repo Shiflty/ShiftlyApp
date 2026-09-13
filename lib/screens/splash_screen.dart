@@ -90,7 +90,10 @@ class _SplashScreenState extends State<SplashScreen>
                   opacity: _fadeAnimation,
                   child: ScaleTransition(
                     scale: _scaleAnimation,
-                    child: const EssentialWorkIcon(size: 140),
+                    child: EssentialWorkIcon(
+                      size: 140,
+                      symbol: context.watch<SettingsProvider>().currencySymbol,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 32),

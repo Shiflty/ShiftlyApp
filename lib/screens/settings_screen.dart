@@ -41,6 +41,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _showEditJobDialog(BuildContext context, [JobType? job]) {
+    final symbol = context.read<SettingsProvider>().currencySymbol;
     final nameController = TextEditingController(text: job?.name ?? '');
     final rateController = TextEditingController(
       text: (job?.hourlyRate ?? 40.22).toString(),
@@ -110,6 +111,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     entries: job.wageHistory!,
                     compact: true,
                     maxItems: 4,
+                    symbol: symbol,
                   ),
                 ],
               ],
@@ -163,7 +165,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   context: context,
                   title: job == null ? 'הוספת תפקיד' : 'עדכון תפקיד',
                   content:
-                      'האם לשמור את התפקיד "$name" עם שכר של ${UIUtils.formatCurrency(rate)} החל מיום ${DateFormat('dd/MM/yyyy').format(effectiveDate)}?',
+                      'האם לשמור את התפקיד "$name" עם שכר של ${UIUtils.formatCurrency(rate, symbol: context.read<SettingsProvider>().currencySymbol)} החל מיום ${DateFormat('dd/MM/yyyy').format(effectiveDate)}?',
                 );
 
                 if (confirmed != true) return;
@@ -240,6 +242,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final settings = context.watch<SettingsProvider>();
+    final symbol = settings.currencySymbol;
     final rawJobs = context.watch<ShiftProvider>().jobTypes;
 
     final jobs = List<JobType>.from(rawJobs)
@@ -326,6 +329,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               settings.setThemeMode(val.first),
                         ),
                       ],
+                    ),
+                  ),
+                  const Divider(height: 1, indent: 56),
+                  ListTile(
+                    title: const Text('מטבע תצוגה'),
+                    subtitle: const Text('המטבע שיוצג עבור שכר והוצאות'),
+                    leading: const Icon(
+                      Icons.payments_outlined,
+                      color: AppTheme.primaryDark,
+                    ),
+                    trailing: DropdownButton<String>(
+                      value: settings.currencySymbol,
+                      underline: const SizedBox(),
+                      items: const [
+                        DropdownMenuItem(value: '₪', child: Text('₪ ILS')),
+                        DropdownMenuItem(value: '\$', child: Text('\$ USD')),
+                        DropdownMenuItem(value: '€', child: Text('€ EUR')),
+                        DropdownMenuItem(value: '£', child: Text('£ GBP')),
+                      ],
+                      onChanged: (val) {
+                        if (val != null) settings.setCurrencySymbol(val);
+                      },
                     ),
                   ),
                 ],
@@ -461,6 +486,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   job: job,
                   onEdit: () => _showEditJobDialog(context, job),
                   onDelete: () => _deleteJob(context, job),
+                  symbol: symbol,
                 ),
               ),
             const SizedBox(height: AppTheme.spaceLg),
@@ -578,11 +604,13 @@ class _JobCard extends StatelessWidget {
   final JobType job;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
+  final String symbol;
 
   const _JobCard({
     required this.job,
     required this.onEdit,
     required this.onDelete,
+    required this.symbol,
   });
 
   @override
@@ -627,7 +655,7 @@ class _JobCard extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          '${UIUtils.formatCurrency(currentRate)} לשעה',
+                          '${UIUtils.formatCurrency(currentRate, symbol: symbol)} לשעה',
                           style: TextStyle(
                             color: AppTheme.primaryDark,
                             fontWeight: FontWeight.w600,
@@ -668,7 +696,7 @@ class _JobCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 12),
-                _WageTimeline(entries: history),
+                _WageTimeline(entries: history, symbol: symbol),
               ],
             ],
           ),
@@ -682,11 +710,13 @@ class _WageTimeline extends StatelessWidget {
   final List<WageEntry> entries;
   final bool compact;
   final int? maxItems;
+  final String symbol;
 
   const _WageTimeline({
     required this.entries,
     this.compact = false,
     this.maxItems,
+    required this.symbol,
   });
 
   @override
@@ -790,7 +820,10 @@ class _WageTimeline extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        UIUtils.formatCurrency(entry.hourlyRate),
+                        UIUtils.formatCurrency(
+                          entry.hourlyRate,
+                          symbol: symbol,
+                        ),
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: compact ? 13 : 15,
