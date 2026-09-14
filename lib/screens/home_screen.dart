@@ -28,6 +28,7 @@ class HomeScreen extends StatelessWidget {
     double grandTotalBaseSalary = 0;
     double grandTotalTips = 0;
     double grandTotalExpenses = 0;
+    int grandTotalShifts = shiftProvider.shifts.length;
 
     for (var shift in shiftProvider.shifts) {
       final job = shiftProvider.getJobTypeById(shift.jobTypeId);
@@ -43,6 +44,7 @@ class HomeScreen extends StatelessWidget {
     }
 
     if (timerProvider.startTime != null) {
+      grandTotalShifts += 1;
       final settings = context.read<SettingsProvider>();
       final job = shiftProvider.getJobTypeById(timerProvider.jobTypeId ?? "");
       final rate = job?.getRateForDate(timerProvider.startTime!) ?? 40.22;
@@ -124,6 +126,7 @@ class HomeScreen extends StatelessWidget {
                             totalBase: grandTotalBaseSalary,
                             totalTips: grandTotalTips,
                             totalExpenses: grandTotalExpenses,
+                            totalShifts: grandTotalShifts,
                           );
                         }
                         final monthKey = groupedShifts.keys.elementAt(
@@ -328,12 +331,14 @@ class _GrandTotalCard extends StatelessWidget {
   final double totalBase;
   final double totalTips;
   final double totalExpenses;
+  final int totalShifts;
 
   const _GrandTotalCard({
     required this.totalHours,
     required this.totalBase,
     required this.totalTips,
     required this.totalExpenses,
+    required this.totalShifts,
   });
 
   @override
@@ -454,6 +459,11 @@ class _GrandTotalCard extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         _HeaderInfoItem(
+                          label: l.common_shifts_count,
+                          value: totalShifts.toString(),
+                        ),
+                        _VerticalDivider(),
+                        _HeaderInfoItem(
                           label: l.home_total_card_hours,
                           value: totalHours.toStringAsFixed(2),
                         ),
@@ -567,6 +577,7 @@ class _MonthExpansionSection extends StatelessWidget {
     double totalBaseSalary = 0;
     double totalTips = 0;
     double totalMonthExpenses = 0;
+    int monthShiftCount = shifts.length;
 
     for (var shift in shifts) {
       final job = shiftProvider.getJobTypeById(shift.jobTypeId);
@@ -590,6 +601,7 @@ class _MonthExpansionSection extends StatelessWidget {
     if (timerProvider.startTime != null &&
         timerProvider.startTime!.year == year &&
         timerProvider.startTime!.month == date.month) {
+      monthShiftCount += 1;
       final settings = context.read<SettingsProvider>();
       final job = shiftProvider.getJobTypeById(timerProvider.jobTypeId ?? "");
       final rate = job?.getRateForDate(timerProvider.startTime!) ?? 40.22;
@@ -647,7 +659,7 @@ class _MonthExpansionSection extends StatelessWidget {
           subtitle: Padding(
             padding: const EdgeInsets.only(top: 4),
             child: Text(
-              "${UIUtils.formatCurrency(net, symbol: symbol)} ${l.home_shift_list_net_total}  ·  ${totalNetHours.toStringAsFixed(2)} ${l.common_hours_suffix}",
+              "$monthShiftCount ${l.common_shifts_count}  ·  ${UIUtils.formatCurrency(net, symbol: symbol)} ${l.home_shift_list_net_total}  ·  ${totalNetHours.toStringAsFixed(2)} ${l.common_hours_suffix}",
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ),

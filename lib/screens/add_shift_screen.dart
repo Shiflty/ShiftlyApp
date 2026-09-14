@@ -731,45 +731,47 @@ class _AddShiftScreenState extends State<AddShiftScreen>
             ),
           ),
 
-          if (isRunning && !isReviewMode) ...[
-            const SizedBox(height: AppTheme.spaceMd),
-            _FormSection(
-              title: l.add_shift_manual_break_type_section,
-              icon: Icons.coffee_outlined,
-              child: SegmentedButton<BreakType?>(
-                emptySelectionAllowed: true,
-                showSelectedIcon: false,
-                segments: [
-                  ButtonSegment(
-                    value: BreakType.paid,
-                    icon: const Icon(Icons.timer_outlined, size: 18),
-                    label: Text(
-                      '${context.read<SettingsProvider>().paidBreakDurationMinutes.toStringAsFixed(0)}\' ${l.add_shift_manual_paid_break}',
+          if (settings.breaksEnabled) ...[
+            if (isRunning && !isReviewMode) ...[
+              const SizedBox(height: AppTheme.spaceMd),
+              _FormSection(
+                title: l.add_shift_manual_break_type_section,
+                icon: Icons.coffee_outlined,
+                child: SegmentedButton<BreakType?>(
+                  emptySelectionAllowed: true,
+                  showSelectedIcon: false,
+                  segments: [
+                    ButtonSegment(
+                      value: BreakType.paid,
+                      icon: const Icon(Icons.timer_outlined, size: 18),
+                      label: Text(
+                        '${context.read<SettingsProvider>().paidBreakDurationMinutes.toStringAsFixed(0)}\' ${l.add_shift_manual_paid_break}',
+                      ),
                     ),
-                  ),
-                  ButtonSegment(
-                    value: BreakType.unpaid,
-                    icon: const Icon(Icons.coffee_outlined, size: 18),
-                    label: Text(
-                      '${context.read<SettingsProvider>().unpaidBreakDurationMinutes.toStringAsFixed(0)}\' ${l.add_shift_manual_unpaid_break}',
+                    ButtonSegment(
+                      value: BreakType.unpaid,
+                      icon: const Icon(Icons.coffee_outlined, size: 18),
+                      label: Text(
+                        '${context.read<SettingsProvider>().unpaidBreakDurationMinutes.toStringAsFixed(0)}\' ${l.add_shift_manual_unpaid_break}',
+                      ),
                     ),
-                  ),
-                ],
-                selected: {if (isOnBreak) timerProvider.activeBreakType},
-                onSelectionChanged: (val) {
-                  final settings = context.read<SettingsProvider>();
-                  if (val.isEmpty) {
-                    if (isOnBreak) timerProvider.endBreak();
-                    return;
-                  }
-                  final type = val.first!;
-                  final minutes = type == BreakType.paid
-                      ? settings.paidBreakDurationMinutes
-                      : settings.unpaidBreakDurationMinutes;
-                  timerProvider.toggleBreak(type, minutes);
-                },
+                  ],
+                  selected: {if (isOnBreak) timerProvider.activeBreakType},
+                  onSelectionChanged: (val) {
+                    final settings = context.read<SettingsProvider>();
+                    if (val.isEmpty) {
+                      if (isOnBreak) timerProvider.endBreak();
+                      return;
+                    }
+                    final type = val.first!;
+                    final minutes = type == BreakType.paid
+                        ? settings.paidBreakDurationMinutes
+                        : settings.unpaidBreakDurationMinutes;
+                    timerProvider.toggleBreak(type, minutes);
+                  },
+                ),
               ),
-            ),
+            ],
           ],
 
           const SizedBox(height: AppTheme.spaceMd),
@@ -919,37 +921,39 @@ class _AddShiftScreenState extends State<AddShiftScreen>
               ],
             ),
           ),
-          const SizedBox(height: AppTheme.spaceSm),
-          _FormSection(
-            title: l.add_shift_manual_break_type_section,
-            icon: Icons.coffee_outlined,
-            child: SizedBox(
-              width: double.infinity,
-              child: SegmentedButton<BreakType>(
-                segments: [
-                  ButtonSegment(
-                    value: BreakType.none,
-                    label: Text(l.add_shift_manual_no_break),
-                  ),
-                  ButtonSegment(
-                    value: BreakType.paid,
-                    label: Text(
-                      '${settings.paidBreakDurationMinutes.toStringAsFixed(0)}\' ${l.add_shift_manual_paid_break}',
+          if (settings.breaksEnabled) ...[
+            const SizedBox(height: AppTheme.spaceSm),
+            _FormSection(
+              title: l.add_shift_manual_break_type_section,
+              icon: Icons.coffee_outlined,
+              child: SizedBox(
+                width: double.infinity,
+                child: SegmentedButton<BreakType>(
+                  segments: [
+                    ButtonSegment(
+                      value: BreakType.none,
+                      label: Text(l.add_shift_manual_no_break),
                     ),
-                  ),
-                  ButtonSegment(
-                    value: BreakType.unpaid,
-                    label: Text(
-                      '${settings.unpaidBreakDurationMinutes.toStringAsFixed(0)}\' ${l.add_shift_manual_unpaid_break}',
+                    ButtonSegment(
+                      value: BreakType.paid,
+                      label: Text(
+                        '${settings.paidBreakDurationMinutes.toStringAsFixed(0)}\' ${l.add_shift_manual_paid_break}',
+                      ),
                     ),
-                  ),
-                ],
-                selected: {_selectedBreakType},
-                onSelectionChanged: (val) =>
-                    setState(() => _selectedBreakType = val.first),
+                    ButtonSegment(
+                      value: BreakType.unpaid,
+                      label: Text(
+                        '${settings.unpaidBreakDurationMinutes.toStringAsFixed(0)}\' ${l.add_shift_manual_unpaid_break}',
+                      ),
+                    ),
+                  ],
+                  selected: {_selectedBreakType},
+                  onSelectionChanged: (val) =>
+                      setState(() => _selectedBreakType = val.first),
+                ),
               ),
             ),
-          ),
+          ],
           const SizedBox(height: AppTheme.spaceSm),
           _FormSection(
             title: l.add_shift_manual_work_tips_section,

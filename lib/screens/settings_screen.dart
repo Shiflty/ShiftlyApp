@@ -345,20 +345,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       Icons.language_rounded,
                       color: AppTheme.primaryDark,
                     ),
-                    trailing: SegmentedButton<String>(
-                      segments: [
-                        ButtonSegment(
+                    trailing: DropdownButton<String>(
+                      value: settings.locale.languageCode,
+                      underline: const SizedBox(),
+                      items: [
+                        DropdownMenuItem(
                           value: 'he',
-                          label: Text(l.settings_language_he),
+                          child: Text(l.settings_language_he),
                         ),
-                        ButtonSegment(
+                        DropdownMenuItem(
                           value: 'en',
-                          label: Text(l.settings_language_en),
+                          child: Text(l.settings_language_en),
                         ),
                       ],
-                      selected: {settings.locale.languageCode},
-                      onSelectionChanged: (val) {
-                        settings.setLocale(Locale(val.first));
+                      onChanged: (val) {
+                        if (val != null) {
+                          settings.setLocale(Locale(val));
+                        }
                       },
                     ),
                   ),
@@ -446,49 +449,68 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 padding: const EdgeInsets.all(AppTheme.spaceSm),
                 child: Column(
                   children: [
-                    TextField(
-                      controller: _paidController,
-                      decoration: InputDecoration(
-                        labelText: l.settings_field_paid_break,
-                        prefixIcon: const Icon(Icons.timer_outlined),
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(
+                        l.settings_field_breaks_enabled,
+                        style: const TextStyle(fontWeight: FontWeight.w500),
                       ),
-                      keyboardType: TextInputType.number,
-                    ),
-                    const SizedBox(height: AppTheme.spaceSm),
-                    TextField(
-                      controller: _unpaidController,
-                      decoration: InputDecoration(
-                        labelText: l.settings_field_unpaid_break,
-                        prefixIcon: const Icon(Icons.coffee_outlined),
+                      subtitle: Text(l.settings_field_breaks_enabled_sub),
+                      secondary: const Icon(
+                        Icons.timer_off_outlined,
+                        color: AppTheme.primaryDark,
                       ),
-                      keyboardType: TextInputType.number,
+                      value: settings.breaksEnabled,
+                      onChanged: (val) => settings.setBreaksEnabled(val),
+                      activeThumbColor: AppTheme.primaryDark,
+                      activeTrackColor: AppTheme.primary.withValues(alpha: 0.35),
                     ),
-                    const SizedBox(height: AppTheme.spaceSm),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () async {
-                          final paid =
-                              double.tryParse(_paidController.text) ?? 20.0;
-                          final unpaid =
-                              double.tryParse(_unpaidController.text) ?? 45.0;
-
-                          final confirmed = await UIUtils.showConfirmDialog(
-                            context: context,
-                            title: l.settings_dialog_update_breaks_title,
-                            content:
-                                '${l.settings_dialog_update_breaks_title}?',
-                          );
-
-                          if (confirmed != true) return;
-                          if (!context.mounted) return;
-
-                          settings.setBreakDurations(paid, unpaid);
-                          UIUtils.showSnackBar(context, l.common_success);
-                        },
-                        child: Text(l.settings_action_update_breaks),
+                    if (settings.breaksEnabled) ...[
+                      const Divider(height: 16),
+                      TextField(
+                        controller: _paidController,
+                        decoration: InputDecoration(
+                          labelText: l.settings_field_paid_break,
+                          prefixIcon: const Icon(Icons.timer_outlined),
+                        ),
+                        keyboardType: TextInputType.number,
                       ),
-                    ),
+                      const SizedBox(height: AppTheme.spaceSm),
+                      TextField(
+                        controller: _unpaidController,
+                        decoration: InputDecoration(
+                          labelText: l.settings_field_unpaid_break,
+                          prefixIcon: const Icon(Icons.coffee_outlined),
+                        ),
+                        keyboardType: TextInputType.number,
+                      ),
+                      const SizedBox(height: AppTheme.spaceSm),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            final paid =
+                                double.tryParse(_paidController.text) ?? 20.0;
+                            final unpaid =
+                                double.tryParse(_unpaidController.text) ?? 45.0;
+
+                            final confirmed = await UIUtils.showConfirmDialog(
+                              context: context,
+                              title: l.settings_dialog_update_breaks_title,
+                              content:
+                                  '${l.settings_dialog_update_breaks_title}?',
+                            );
+
+                            if (confirmed != true) return;
+                            if (!context.mounted) return;
+
+                            settings.setBreakDurations(paid, unpaid);
+                            UIUtils.showSnackBar(context, l.common_success);
+                          },
+                          child: Text(l.settings_action_update_breaks),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),

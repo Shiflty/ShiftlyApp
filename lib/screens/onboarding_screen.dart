@@ -32,6 +32,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   late double _reminderHours;
   late bool _autoExpenseEnabled;
   late String _currencySymbol;
+  late Locale _locale;
+  late bool _breaksEnabled;
   final List<TextEditingController> _autoAmountControllers = [];
   final List<TextEditingController> _autoDescControllers = [];
 
@@ -45,6 +47,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     _reminderHours = settings.shiftReminderDurationHours;
     _autoExpenseEnabled = settings.automaticExpenseEnabled;
     _currencySymbol = settings.currencySymbol;
+    _locale = settings.locale;
+    _breaksEnabled = settings.breaksEnabled;
 
     for (var e in settings.defaultAutomaticExpenses) {
       _autoAmountControllers.add(
@@ -71,7 +75,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   void _nextPage() {
-    if (_currentPage < 5) {
+    if (_currentPage < 6) {
       _pageController.nextPage(
         duration: const Duration(milliseconds: 400),
         curve: Curves.easeInOut,
@@ -124,11 +128,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     }
 
     await settings.setBreakDurations(_paidMinutes, _unpaidMinutes);
+    await settings.setBreaksEnabled(_breaksEnabled);
     await settings.setShiftRemindersEnabled(_remindersEnabled);
     await settings.setShiftReminderDurationHours(_reminderHours);
     await settings.setAutomaticExpenseEnabled(_autoExpenseEnabled);
     await settings.updateDefaultAutomaticExpenses(expenses);
     await settings.setCurrencySymbol(_currencySymbol);
+    await settings.setLocale(_locale);
 
     if (_remindersEnabled) {
       await NotificationService.requestPermissions();
@@ -156,10 +162,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 onPageChanged: (page) => setState(() => _currentPage = page),
                 children: [
                   _buildPage(child: _buildWelcomePage()),
-                  _buildPage(child: _buildCurrencyPage()),
-                  _buildPage(child: _buildBreakSettingsPage()),
+                  _buildPage(child: _buildLanguagePage()),
                   _buildPage(child: _buildReminderSettingsPage()),
+                  _buildPage(child: _buildCurrencyPage()),
                   _buildPage(child: _buildAutoExpensePage()),
+                  _buildPage(child: _buildBreakSettingsPage()),
                   _buildJobTypesPage(),
                 ],
               ),
@@ -208,8 +215,63 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
+  Widget _buildLanguagePage() {
+    final l = AppLocalizations.of(context)!;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Icon(Icons.language_rounded, size: 64, color: Colors.blue),
+        const SizedBox(height: 24),
+        Text(
+          l.onboarding_language_title,
+          style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          l.onboarding_language_subtitle,
+          style: const TextStyle(fontSize: 16, color: Colors.grey),
+        ),
+        const SizedBox(height: 40),
+        DropdownButtonFormField<String>(
+          initialValue: _locale.languageCode,
+          decoration: InputDecoration(
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            filled: true,
+            prefixIcon: const Icon(Icons.translate_rounded),
+          ),
+          items: [
+            DropdownMenuItem(
+              value: 'he',
+              child: Text(l.settings_language_he),
+            ),
+            DropdownMenuItem(
+              value: 'en',
+              child: Text(l.settings_language_en),
+            ),
+          ],
+          onChanged: (val) {
+            if (val != null) {
+              final newLocale = Locale(val);
+              setState(() => _locale = newLocale);
+              // Update settings immediately for instant translation
+              context.read<SettingsProvider>().setLocale(newLocale);
+            }
+          },
+        ),
+      ],
+    );
+  }
+
   Widget _buildCurrencyPage() {
     final l = AppLocalizations.of(context)!;
+    final currencies = [
+      {'value': '₪', 'label': '₪ ILS'},
+      {'value': '\$', 'label': '\$ USD'},
+      {'value': '€', 'label': '€ EUR'},
+      {'value': '£', 'label': '£ GBP'},
+    ];
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -226,19 +288,25 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           style: const TextStyle(fontSize: 16, color: Colors.grey),
         ),
         const SizedBox(height: 40),
-        SizedBox(
-          width: double.infinity,
-          child: SegmentedButton<String>(
-            segments: const [
-              ButtonSegment(value: '₪', label: Text('₪ ILS')),
-              ButtonSegment(value: '\$', label: Text('\$ USD')),
-              ButtonSegment(value: '€', label: Text('€ EUR')),
-              ButtonSegment(value: '£', label: Text('£ GBP')),
-            ],
-            selected: {_currencySymbol},
-            onSelectionChanged: (val) =>
-                setState(() => _currencySymbol = val.first),
+        DropdownButtonFormField<String>(
+          initialValue: _currencySymbol,
+          decoration: InputDecoration(
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            filled: true,
+            prefixIcon: const Icon(Icons.payments_outlined),
           ),
+          items: currencies.map((c) {
+            return DropdownMenuItem<String>(
+              value: c['value'],
+              child: Text(c['label']!),
+            );
+          }).toList(),
+          onChanged: (val) {
+            if (val != null) {
+              setState(() => _currencySymbol = val);
+              context.read<SettingsProvider>().setCurrencySymbol(val);
+            }
+          },
         ),
       ],
     );
@@ -262,17 +330,31 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           style: const TextStyle(fontSize: 16, color: Colors.grey),
         ),
         const SizedBox(height: 40),
-        _buildDurationSlider(
-          label: l.onboarding_breaks_paid_label,
-          value: _paidMinutes,
-          onChanged: (val) => setState(() => _paidMinutes = val),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(
+            l.onboarding_breaks_enable,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+          ),
+          value: _breaksEnabled,
+          onChanged: (val) => setState(() => _breaksEnabled = val),
+          activeThumbColor: AppTheme.primaryDark,
+          activeTrackColor: AppTheme.primary.withValues(alpha: 0.35),
         ),
-        const SizedBox(height: 32),
-        _buildDurationSlider(
-          label: l.onboarding_breaks_unpaid_label,
-          value: _unpaidMinutes,
-          onChanged: (val) => setState(() => _unpaidMinutes = val),
-        ),
+        if (_breaksEnabled) ...[
+          const SizedBox(height: 32),
+          _buildDurationSlider(
+            label: l.onboarding_breaks_paid_label,
+            value: _paidMinutes,
+            onChanged: (val) => setState(() => _paidMinutes = val),
+          ),
+          const SizedBox(height: 32),
+          _buildDurationSlider(
+            label: l.onboarding_breaks_unpaid_label,
+            value: _unpaidMinutes,
+            onChanged: (val) => setState(() => _unpaidMinutes = val),
+          ),
+        ],
       ],
     );
   }
@@ -688,37 +770,60 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Widget _buildFooter() {
     final l = AppLocalizations.of(context)!;
     return Padding(
-      padding: const EdgeInsets.all(24.0),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          if (_currentPage > 0)
-            TextButton.icon(
-              onPressed: _previousPage,
-              icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 16),
-              label: Text(l.common_back),
-            )
-          else
-            const SizedBox(width: 80),
-          Row(
-            children: List.generate(
-              6,
-              (index) => Container(
-                margin: const EdgeInsets.symmetric(horizontal: 4),
-                width: 12,
-                height: 12,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: _currentPage == index
-                      ? Colors.blue
-                      : Colors.grey.shade300,
+          Expanded(
+            flex: 3,
+            child: Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: _currentPage > 0
+                  ? TextButton.icon(
+                    onPressed: _previousPage,
+                    icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 16),
+                    label: Text(
+                      l.common_back,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  )
+                  : const SizedBox(),
+            ),
+          ),
+          Expanded(
+            flex: 4,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(
+                7,
+                (index) => Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  width: _currentPage == index ? 10 : 8,
+                  height: _currentPage == index ? 10 : 8,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _currentPage == index
+                        ? Colors.blue
+                        : Colors.grey.shade300,
+                  ),
                 ),
               ),
             ),
           ),
-          ElevatedButton(
-            onPressed: _nextPage,
-            child: Text(_currentPage == 5 ? l.common_start : l.common_continue),
+          Expanded(
+            flex: 3,
+            child: Align(
+              alignment: AlignmentDirectional.centerEnd,
+              child: ElevatedButton(
+                onPressed: _nextPage,
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                ),
+                child: Text(
+                  _currentPage == 6 ? l.common_start : l.common_continue,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ),
           ),
         ],
       ),

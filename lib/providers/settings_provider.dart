@@ -73,6 +73,7 @@ class SettingsProvider with ChangeNotifier {
       defaultValue: false,
     );
     _currencySymbol = box.get('currencySymbol', defaultValue: '₪');
+    _breaksEnabled = box.get('breaksEnabled', defaultValue: true);
     final String? localeCode = box.get('locale');
     if (localeCode != null) {
       _locale = Locale(localeCode);
@@ -127,6 +128,12 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> setBreaksEnabled(bool enabled) async {
+    _breaksEnabled = enabled;
+    await _persistence.settingsBox.put('breaksEnabled', enabled);
+    notifyListeners();
+  }
+
   Future<void> setLocale(Locale locale) async {
     _locale = locale;
     await _persistence.settingsBox.put('locale', locale.languageCode);
@@ -158,6 +165,7 @@ class SettingsProvider with ChangeNotifier {
     _defaultAutomaticExpenses = [];
     _currencySymbol = '₪';
     _locale = const Locale('he', 'IL');
+    _breaksEnabled = true;
     notifyListeners();
   }
 }
