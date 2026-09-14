@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:shiftly/l10n/app_localizations.dart';
 import 'package:shiftly/models/break_type.dart';
 import 'package:shiftly/models/shift.dart';
 import 'package:shiftly/providers/settings_provider.dart';
@@ -20,7 +21,7 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final shiftProvider = context.watch<ShiftProvider>();
     final timerProvider = context.watch<TimerProvider>();
-    final settings = context.watch<SettingsProvider>();
+    final l = AppLocalizations.of(context)!;
     final groupedShifts = shiftProvider.shiftsGroupedByMonth;
 
     double grandTotalNetHours = 0;
@@ -42,6 +43,7 @@ class HomeScreen extends StatelessWidget {
     }
 
     if (timerProvider.startTime != null) {
+      final settings = context.read<SettingsProvider>();
       final job = shiftProvider.getJobTypeById(timerProvider.jobTypeId ?? "");
       final rate = job?.getRateForDate(timerProvider.startTime!) ?? 40.22;
       grandTotalNetHours += timerProvider.netMinutes / 60.0;
@@ -62,7 +64,7 @@ class HomeScreen extends StatelessWidget {
           children: [
             IconButton(
               icon: const Icon(Icons.calendar_month_rounded),
-              tooltip: 'לוח שנה',
+              tooltip: l.home_action_calendar,
               onPressed: () => Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const CalendarScreen()),
@@ -70,7 +72,7 @@ class HomeScreen extends StatelessWidget {
             ),
             IconButton(
               icon: const Icon(Icons.receipt_long_rounded),
-              tooltip: 'הוצאות',
+              tooltip: l.expenses_title,
               onPressed: () => Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const ExpensesScreen()),
@@ -79,7 +81,7 @@ class HomeScreen extends StatelessWidget {
           ],
         ),
         title: Text(
-          'Shiftly',
+          l.common_app_name,
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.bold,
             letterSpacing: -0.5,
@@ -88,7 +90,7 @@ class HomeScreen extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.settings_outlined),
-            tooltip: 'הגדרות',
+            tooltip: l.settings_title,
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const SettingsScreen()),
@@ -98,7 +100,6 @@ class HomeScreen extends StatelessWidget {
         ],
       ),
       body: SafeArea(
-        bottom: true,
         child: Column(
           children: [
             if (timerProvider.startTime != null)
@@ -164,9 +165,9 @@ class HomeScreen extends StatelessWidget {
                 },
           ),
         ),
-        label: const Text('משמרת חדשה'),
+        label: Text(l.home_action_new_shift),
         icon: const Icon(Icons.add_rounded),
-        tooltip: 'הוסף משמרת',
+        tooltip: l.home_action_new_shift,
       ),
     );
   }
@@ -175,6 +176,7 @@ class HomeScreen extends StatelessWidget {
 class _EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     return Center(
       child: SingleChildScrollView(
         child: Padding(
@@ -196,12 +198,12 @@ class _EmptyState extends StatelessWidget {
               ),
               const SizedBox(height: AppTheme.spaceSm),
               Text(
-                'עדיין לא נרשמו משמרות',
+                l.home_empty_state_title,
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: AppTheme.spaceXs),
               Text(
-                'לחץ על "משמרת חדשה" כדי להתחיל',
+                l.home_empty_state_subtitle,
                 style: Theme.of(context).textTheme.bodySmall,
                 textAlign: TextAlign.center,
               ),
@@ -221,6 +223,7 @@ class _ActiveTimerBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final shiftProvider = context.read<ShiftProvider>();
+    final l = AppLocalizations.of(context)!;
     final symbol = context.watch<SettingsProvider>().currencySymbol;
     final job = shiftProvider.getJobTypeById(timer.jobTypeId ?? "");
     final rate = timer.startTime != null
@@ -290,8 +293,8 @@ class _ActiveTimerBanner extends StatelessWidget {
                 children: [
                   Text(
                     isBreak
-                        ? 'משמרת בהפסקה...'
-                        : 'משמרת פעילה: ${job?.name ?? ""}',
+                        ? l.home_active_timer_break
+                        : '${l.home_active_timer_active} ${job?.name ?? ""}',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: isDark ? accent : accent.withValues(alpha: 0.9),
@@ -299,7 +302,7 @@ class _ActiveTimerBanner extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'זמן: $timeStr  ·  ${UIUtils.formatCurrency(pay, symbol: symbol)}',
+                    '${l.home_active_timer_time} $timeStr  ·  ${UIUtils.formatCurrency(pay, symbol: symbol)}',
                     style: TextStyle(
                       color: Theme.of(
                         context,
@@ -335,9 +338,10 @@ class _GrandTotalCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final symbol = context.watch<SettingsProvider>().currencySymbol;
     final net = totalBase + totalTips - totalExpenses;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l = AppLocalizations.of(context)!;
+    final symbol = context.watch<SettingsProvider>().currencySymbol;
 
     return Container(
       margin: const EdgeInsets.only(
@@ -417,7 +421,7 @@ class _GrandTotalCard extends StatelessWidget {
               child: Column(
                 children: [
                   Text(
-                    'סה"כ הצטבר (נטו פחות הוצאות)',
+                    l.home_total_card_title,
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.85),
                       fontSize: 14,
@@ -450,12 +454,12 @@ class _GrandTotalCard extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         _HeaderInfoItem(
-                          label: 'שעות',
+                          label: l.home_total_card_hours,
                           value: totalHours.toStringAsFixed(2),
                         ),
                         _VerticalDivider(),
                         _HeaderInfoItem(
-                          label: 'בסיס',
+                          label: l.home_total_card_base,
                           value: UIUtils.formatCurrency(
                             totalBase,
                             symbol: symbol,
@@ -464,7 +468,7 @@ class _GrandTotalCard extends StatelessWidget {
                         ),
                         _VerticalDivider(),
                         _HeaderInfoItem(
-                          label: 'טיפים',
+                          label: l.home_total_card_tips,
                           value: UIUtils.formatCurrency(
                             totalTips,
                             symbol: symbol,
@@ -473,7 +477,7 @@ class _GrandTotalCard extends StatelessWidget {
                         ),
                         _VerticalDivider(),
                         _HeaderInfoItem(
-                          label: 'הוצאות',
+                          label: l.home_total_card_expenses,
                           value: UIUtils.formatCurrency(
                             totalExpenses,
                             symbol: symbol,
@@ -506,31 +510,27 @@ class _HeaderInfoItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Flexible(
-      child: Column(
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.7),
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-            ),
+    return Column(
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.7),
+            fontSize: 11,
+            fontWeight: FontWeight.w500,
           ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: (amount ?? 0) < 0 ? const Color(0xFFFECACA) : Colors.white,
-              fontSize: 13,
-              fontWeight: FontWeight.bold,
-              fontFeatures: const [FontFeature.tabularFigures()],
-            ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: TextStyle(
+            color: (amount ?? 0) < 0 ? const Color(0xFFFECACA) : Colors.white,
+            fontSize: 13,
+            fontWeight: FontWeight.bold,
+            fontFeatures: const [FontFeature.tabularFigures()],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -560,8 +560,8 @@ class _MonthExpansionSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final shiftProvider = context.read<ShiftProvider>();
-    final settings = context.watch<SettingsProvider>();
-    final symbol = settings.currencySymbol;
+    final l = AppLocalizations.of(context)!;
+    final symbol = context.watch<SettingsProvider>().currencySymbol;
 
     double totalNetHours = 0;
     double totalBaseSalary = 0;
@@ -583,13 +583,14 @@ class _MonthExpansionSection extends StatelessWidget {
     }
 
     final date = DateTime.parse("$monthKey-01");
-    final monthName = DateFormat.MMMM('he_IL').format(date);
+    final monthName = DateFormat.MMMM(l.localeName).format(date);
     final year = date.year;
 
     final timerProvider = context.watch<TimerProvider>();
     if (timerProvider.startTime != null &&
         timerProvider.startTime!.year == year &&
         timerProvider.startTime!.month == date.month) {
+      final settings = context.read<SettingsProvider>();
       final job = shiftProvider.getJobTypeById(timerProvider.jobTypeId ?? "");
       final rate = job?.getRateForDate(timerProvider.startTime!) ?? 40.22;
       totalNetHours += timerProvider.netMinutes / 60.0;
@@ -646,7 +647,7 @@ class _MonthExpansionSection extends StatelessWidget {
           subtitle: Padding(
             padding: const EdgeInsets.only(top: 4),
             child: Text(
-              "${UIUtils.formatCurrency(net, symbol: symbol)} סה\"כ נטו  ·  ${totalNetHours.toStringAsFixed(2)} שעות",
+              "${UIUtils.formatCurrency(net, symbol: symbol)} ${l.home_shift_list_net_total}  ·  ${totalNetHours.toStringAsFixed(2)} ${l.common_hours_suffix}",
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ),
@@ -659,7 +660,7 @@ class _MonthExpansionSection extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     _SummaryItem(
-                      label: 'בסיס',
+                      label: l.home_total_card_base,
                       value: UIUtils.formatCurrency(
                         totalBaseSalary,
                         symbol: symbol,
@@ -668,14 +669,14 @@ class _MonthExpansionSection extends StatelessWidget {
                     ),
                     const VerticalDivider(width: 1, indent: 4, endIndent: 4),
                     _SummaryItem(
-                      label: 'טיפים',
+                      label: l.home_total_card_tips,
                       value: UIUtils.formatCurrency(totalTips, symbol: symbol),
                       amount: totalTips,
                       accent: AppTheme.profit,
                     ),
                     const VerticalDivider(width: 1, indent: 4, endIndent: 4),
                     _SummaryItem(
-                      label: 'הוצאות',
+                      label: l.home_total_card_expenses,
                       value: UIUtils.formatCurrency(
                         totalMonthExpenses,
                         symbol: symbol,
@@ -684,7 +685,7 @@ class _MonthExpansionSection extends StatelessWidget {
                     ),
                     const VerticalDivider(width: 1, indent: 4, endIndent: 4),
                     _SummaryItem(
-                      label: 'נטו',
+                      label: l.common_net,
                       value: UIUtils.formatCurrency(net, symbol: symbol),
                       isBold: true,
                       amount: net,
@@ -727,29 +728,25 @@ class _SummaryItem extends StatelessWidget {
       textColor = accent;
     }
 
-    return Flexible(
-      child: Column(
-        children: [
-          Text(
-            label,
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w500),
+    return Column(
+      children: [
+        Text(
+          label,
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w500),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: isBold ? 16 : 14,
+            fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
+            color: textColor,
+            fontFeatures: const [FontFeature.tabularFigures()],
           ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: isBold ? 16 : 14,
-              fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
-              color: textColor,
-              fontFeatures: const [FontFeature.tabularFigures()],
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -763,6 +760,7 @@ class _ShiftTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final shiftProvider = context.read<ShiftProvider>();
     final settings = context.watch<SettingsProvider>();
+    final l = AppLocalizations.of(context)!;
     final job = shiftProvider.getJobTypeById(shift.jobTypeId);
     final rate = shift.hourlyRate ?? job?.getRateForDate(shift.date) ?? 40.22;
     final pay = shift.calculateTotalPay(rate);
@@ -792,10 +790,10 @@ class _ShiftTile extends StatelessWidget {
         final dateStr = DateFormat('dd/MM/yyyy').format(shift.date);
         return await UIUtils.showConfirmDialog(
           context: context,
-          title: 'מחיקת משמרת',
-          content: 'האם אתה בטוח שברצונך למחוק את המשמרת מיום $dateStr?',
+          title: l.common_delete,
+          content: '${l.common_delete} $dateStr?',
           isDestructive: true,
-          confirmLabel: 'מחק',
+          confirmLabel: l.common_delete,
         );
       },
       onDismissed: (_) {
@@ -804,11 +802,21 @@ class _ShiftTile extends StatelessWidget {
 
         UIUtils.showSnackBar(
           context,
-          'משמרת מיום $dateStr נמחקה',
+          '$dateStr ${l.common_delete}',
           action: SnackBarAction(
-            label: 'ביטול',
+            label: l.common_back,
             onPressed: () {
-              shiftProvider.addShift(shift);
+              shiftProvider.addShift(
+                shift,
+                l10n: {
+                  'title': l.notification_reminder_title,
+                  'body': l.notification_reminder_body,
+                  'hours': l.common_hours_suffix,
+                  'minutes': l.common_min_suffix,
+                  'channelName': l.notification_channel_reminders_name,
+                  'channelDesc': l.notification_channel_reminders_desc,
+                },
+              );
             },
           ),
         );
@@ -872,7 +880,7 @@ class _ShiftTile extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          DateFormat.E('he_IL').format(shift.date),
+                          DateFormat.E(l.localeName).format(shift.date),
                           style: TextStyle(
                             fontSize: 10,
                             color: Theme.of(
@@ -899,7 +907,7 @@ class _ShiftTile extends StatelessWidget {
                             const SizedBox(width: 6),
                             Flexible(
                               child: Text(
-                                job?.name ?? 'לא ידוע',
+                                job?.name ?? l.common_error,
                                 style: const TextStyle(
                                   fontWeight: FontWeight.w600,
                                   fontSize: 15,
@@ -911,7 +919,7 @@ class _ShiftTile extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          "${DateFormat.Hm().format(shift.startTime)} – ${DateFormat.Hm().format(shift.endTime)}  ·  ${shift.netHours.toStringAsFixed(2)} ש'",
+                          "${DateFormat.Hm().format(shift.startTime)} – ${DateFormat.Hm().format(shift.endTime)}  ·  ${shift.netHours.toStringAsFixed(2)} ${l.common_hours_suffix}",
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                         if (shift.tips > 0 || breakType != BreakType.none) ...[
@@ -930,14 +938,14 @@ class _ShiftTile extends StatelessWidget {
                               if (breakType == BreakType.paid)
                                 _ShiftTag(
                                   label:
-                                      "${settings.paidBreakDurationMinutes.toStringAsFixed(0)}' בתשלום",
+                                      "${settings.paidBreakDurationMinutes.toStringAsFixed(0)} ${l.common_min_suffix} ${l.add_shift_manual_paid_break}",
                                   icon: Icons.timer_outlined,
                                   color: AppTheme.primary,
                                 ),
                               if (breakType == BreakType.unpaid)
                                 _ShiftTag(
                                   label:
-                                      "${(shift.unpaidBreakMinutes ?? settings.unpaidBreakDurationMinutes).toStringAsFixed(0)}' הפסקה",
+                                      "${(shift.unpaidBreakMinutes ?? settings.unpaidBreakDurationMinutes).toStringAsFixed(0)} ${l.common_min_suffix} ${l.add_shift_manual_unpaid_break}",
                                   icon: Icons.coffee_outlined,
                                   color: AppTheme.warningSoft,
                                 ),

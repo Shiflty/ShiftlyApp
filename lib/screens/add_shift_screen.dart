@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:shiftly/l10n/app_localizations.dart';
 import 'package:shiftly/models/automatic_expense.dart';
 import 'package:shiftly/models/break_type.dart';
 import 'package:shiftly/models/job_type.dart';
@@ -136,11 +137,11 @@ class _AddShiftScreenState extends State<AddShiftScreen>
 
         final jobs = context.read<ShiftProvider>().jobTypes;
         if (jobs.isNotEmpty) {
-          final miznon = jobs.firstWhere(
-            (j) => j.name.contains('מזנון'),
+          final buffet = jobs.firstWhere(
+            (j) => j.id == '1',
             orElse: () => jobs.first,
           );
-          _selectedJobTypeId = miznon.id;
+          _selectedJobTypeId = buffet.id;
         }
 
         if (timer.isRunning) {
@@ -189,6 +190,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
   }
 
   List<AutomaticExpense>? _getExpenseList() {
+    final l = AppLocalizations.of(context)!;
     List<AutomaticExpense> list = [];
     for (int i = 0; i < _autoExpenseAmountControllers.length; i++) {
       final amountText = _autoExpenseAmountControllers[i].text.trim();
@@ -200,17 +202,13 @@ class _AddShiftScreenState extends State<AddShiftScreen>
       if (desc.isEmpty) {
         UIUtils.showSnackBar(
           context,
-          'נא להזין תיאור לכל ההוצאות',
+          l.settings_dialog_error_enter_desc,
           isError: true,
         );
         return null;
       }
       if (amount == null || amount < 0) {
-        UIUtils.showSnackBar(
-          context,
-          'סכום ההוצאה "$desc" אינו תקין',
-          isError: true,
-        );
+        UIUtils.showSnackBar(context, l.common_error, isError: true);
         return null;
       }
       if (amount > 0) {
@@ -223,6 +221,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
   void _finishTimerShift() async {
     final timerProvider = context.read<TimerProvider>();
     final shiftProvider = context.read<ShiftProvider>();
+    final l = AppLocalizations.of(context)!;
 
     if (timerProvider.startTime == null || timerProvider.jobTypeId == null) {
       return;
@@ -230,8 +229,8 @@ class _AddShiftScreenState extends State<AddShiftScreen>
 
     final confirmed = await UIUtils.showConfirmDialog(
       context: context,
-      title: 'סיום משמרת',
-      content: 'האם אתה בטוח שברצונך לשמור את פרטי המשמרת?',
+      title: l.common_confirm,
+      content: l.common_confirm,
     );
     if (confirmed != true) return;
     if (!mounted) return;
@@ -261,16 +260,27 @@ class _AddShiftScreenState extends State<AddShiftScreen>
       unpaidBreakMinutes: timerProvider.accumulatedUnpaidMinutes,
     );
 
-    shiftProvider.addShift(shift);
+    shiftProvider.addShift(
+      shift,
+      l10n: {
+        'title': l.notification_reminder_title,
+        'body': l.notification_reminder_body,
+        'hours': l.common_hours_suffix,
+        'minutes': l.common_min_suffix,
+        'channelName': l.notification_channel_reminders_name,
+        'channelDesc': l.notification_channel_reminders_desc,
+      },
+    );
     timerProvider.resetTimer();
 
     if (!mounted) return;
-    UIUtils.showSnackBar(context, 'המשמרת נשמרה בהצלחה');
+    UIUtils.showSnackBar(context, l.common_success);
     Navigator.pop(context);
   }
 
   void _saveManual() async {
     if (_selectedJobTypeId == null) return;
+    final l = AppLocalizations.of(context)!;
 
     final start = DateTime(
       _selectedDate.year,
@@ -293,8 +303,8 @@ class _AddShiftScreenState extends State<AddShiftScreen>
 
     final confirmed = await UIUtils.showConfirmDialog(
       context: context,
-      title: widget.shiftToEdit != null ? 'עדכון משמרת' : 'שמירת משמרת',
-      content: 'האם אתה בטוח שברצונך לשמור את פרטי המשמרת?',
+      title: widget.shiftToEdit != null ? l.common_save : l.common_confirm,
+      content: l.common_confirm,
     );
     if (confirmed != true) return;
     if (!mounted) return;
@@ -320,9 +330,19 @@ class _AddShiftScreenState extends State<AddShiftScreen>
       s.unpaidBreakMinutes = settings.unpaidBreakDurationMinutes;
 
       if (!mounted) return;
-      shiftProvider.updateShift(s);
+      shiftProvider.updateShift(
+        s,
+        l10n: {
+          'title': l.notification_reminder_title,
+          'body': l.notification_reminder_body,
+          'hours': l.common_hours_suffix,
+          'minutes': l.common_min_suffix,
+          'channelName': l.notification_channel_reminders_name,
+          'channelDesc': l.notification_channel_reminders_desc,
+        },
+      );
 
-      UIUtils.showSnackBar(context, 'המשמרת עודכנה בהצלחה');
+      UIUtils.showSnackBar(context, l.common_success);
     } else {
       final shift = Shift(
         id: const Uuid().v4(),
@@ -338,9 +358,19 @@ class _AddShiftScreenState extends State<AddShiftScreen>
         unpaidBreakMinutes: settings.unpaidBreakDurationMinutes,
       );
       if (!mounted) return;
-      shiftProvider.addShift(shift);
+      shiftProvider.addShift(
+        shift,
+        l10n: {
+          'title': l.notification_reminder_title,
+          'body': l.notification_reminder_body,
+          'hours': l.common_hours_suffix,
+          'minutes': l.common_min_suffix,
+          'channelName': l.notification_channel_reminders_name,
+          'channelDesc': l.notification_channel_reminders_desc,
+        },
+      );
 
-      UIUtils.showSnackBar(context, 'המשמרת נשמרה בהצלחה');
+      UIUtils.showSnackBar(context, l.common_success);
     }
     if (mounted) Navigator.pop(context);
   }
@@ -348,6 +378,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
   void _saveRaw() async {
     if (_selectedJobTypeId == null) return;
     final settings = context.read<SettingsProvider>();
+    final l = AppLocalizations.of(context)!;
 
     final lines = _rawTextController.text.split('\n');
     final validLines = lines.where((l) => l.trim().isNotEmpty).toList();
@@ -355,8 +386,8 @@ class _AddShiftScreenState extends State<AddShiftScreen>
 
     final confirmed = await UIUtils.showConfirmDialog(
       context: context,
-      title: 'פענוח משמרות',
-      content: 'האם לפענח ולשמור ${validLines.length} משמרות מהטקסט שהודבק?',
+      title: l.common_confirm,
+      content: '${l.common_confirm} ${validLines.length}?',
     );
     if (confirmed != true) return;
     if (!mounted) return;
@@ -380,7 +411,17 @@ class _AddShiftScreenState extends State<AddShiftScreen>
               .toList();
         }
         if (!mounted) continue;
-        shiftProvider.addShift(shift);
+        shiftProvider.addShift(
+          shift,
+          l10n: {
+            'title': l.notification_reminder_title,
+            'body': l.notification_reminder_body,
+            'hours': l.common_hours_suffix,
+            'minutes': l.common_min_suffix,
+            'channelName': l.notification_channel_reminders_name,
+            'channelDesc': l.notification_channel_reminders_desc,
+          },
+        );
         addedCount++;
       }
     }
@@ -389,24 +430,21 @@ class _AddShiftScreenState extends State<AddShiftScreen>
     if (addedCount > 0) {
       Navigator.pop(context);
     } else {
-      UIUtils.showSnackBar(
-        context,
-        'בדוק שוב האם הפורמט שהזנת תקין',
-        isError: true,
-      );
+      UIUtils.showSnackBar(context, l.common_error, isError: true);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final rawJobs = context.watch<ShiftProvider>().jobTypes;
+    final l = AppLocalizations.of(context)!;
 
     final jobs = List<JobType>.from(rawJobs)
       ..sort((a, b) {
-        if (a.name.contains('מזנון')) return -1;
-        if (b.name.contains('מזנון')) return 1;
-        if (a.name.contains('סדרן')) return -1;
-        if (b.name.contains('סדרן')) return 1;
+        if (a.id == '1') return -1;
+        if (b.id == '1') return 1;
+        if (a.id == '2') return -1;
+        if (b.id == '2') return 1;
         return a.name.compareTo(b.name);
       });
 
@@ -414,20 +452,28 @@ class _AddShiftScreenState extends State<AddShiftScreen>
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isEditing ? 'עריכת משמרת' : 'רישום משמרת'),
+        title: Text(isEditing ? l.add_shift_edit_title : l.add_shift_title),
         bottom: isEditing
             ? null
             : TabBar(
                 controller: _tabController,
-                tabs: const [
-                  Tab(text: 'טיימר', icon: Icon(Icons.timer_outlined)),
-                  Tab(text: 'ידני', icon: Icon(Icons.edit_note_rounded)),
-                  Tab(text: 'הדבקה', icon: Icon(Icons.paste_rounded)),
+                tabs: [
+                  Tab(
+                    text: l.add_shift_timer_tab,
+                    icon: const Icon(Icons.timer_outlined),
+                  ),
+                  Tab(
+                    text: l.add_shift_manual_tab,
+                    icon: const Icon(Icons.edit_note_rounded),
+                  ),
+                  Tab(
+                    text: l.add_shift_paste_tab,
+                    icon: const Icon(Icons.paste_rounded),
+                  ),
                 ],
               ),
       ),
       body: SafeArea(
-        bottom: true,
         child: isEditing
             ? _buildManualForm(jobs)
             : TabBarView(
@@ -447,6 +493,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
     final shiftProvider = context.watch<ShiftProvider>();
     final settings = context.watch<SettingsProvider>();
     final symbol = settings.currencySymbol;
+    final l = AppLocalizations.of(context)!;
     final isRunning = timerProvider.isRunning;
     final isOnBreak = timerProvider.isOnBreak;
     final isReviewMode = timerProvider.startTime != null && !isRunning;
@@ -484,11 +531,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
                 _tabController.animateTo(0);
               } else if (!isRunning) {
                 if (_selectedJobTypeId == null) {
-                  UIUtils.showSnackBar(
-                    context,
-                    'בחר סוג עבודה קודם',
-                    isError: true,
-                  );
+                  UIUtils.showSnackBar(context, l.common_error, isError: true);
                   return;
                 }
                 timerProvider.startShift(_selectedJobTypeId!);
@@ -559,10 +602,12 @@ class _AddShiftScreenState extends State<AddShiftScreen>
                       const SizedBox(height: AppTheme.spaceXs),
                       Text(
                         isReviewMode
-                            ? 'המשך משמרת'
+                            ? l.common_continue
                             : (isRunning
-                                  ? (isOnBreak ? 'חזור לעבודה' : 'סיים משמרת')
-                                  : 'התחל משמרת'),
+                                  ? (isOnBreak
+                                        ? l.add_shift_timer_resume_work
+                                        : l.add_shift_timer_stop_shift)
+                                  : l.add_shift_timer_start_shift),
                         style: TextStyle(
                           color: isReviewMode || isRunning
                               ? Colors.white
@@ -593,7 +638,10 @@ class _AddShiftScreenState extends State<AddShiftScreen>
               color: livePay < 0 ? AppTheme.expense : AppTheme.primaryDark,
             ),
           ),
-          Text('נצבר בשידור חי', style: Theme.of(context).textTheme.bodySmall),
+          Text(
+            l.add_shift_timer_accumulated_live,
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
           if (isOnBreak || timerProvider.accumulatedUnpaidMinutes > 0) ...[
             const SizedBox(height: AppTheme.spaceSm),
             Container(
@@ -612,7 +660,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
                 children: [
                   if (isOnBreak)
                     Text(
-                      'ספירה לאחור: ${timerProvider.breakRemaining.inMinutes}:${(timerProvider.breakRemaining.inSeconds % 60).toString().padLeft(2, '0')}',
+                      '${l.add_shift_timer_countdown} ${timerProvider.breakRemaining.inMinutes}:${(timerProvider.breakRemaining.inSeconds % 60).toString().padLeft(2, '0')}',
                       style: AppTheme.monoNumber.copyWith(
                         fontSize: 20,
                         color: timerProvider.activeBreakType == BreakType.paid
@@ -623,9 +671,9 @@ class _AddShiftScreenState extends State<AddShiftScreen>
                   Text(
                     isOnBreak
                         ? (timerProvider.activeBreakType == BreakType.paid
-                              ? 'בהפסקה בתשלום...'
-                              : 'בהפסקה ללא תשלום (השעון עצר)')
-                        : 'סה"כ הפסקה (לא בתשלום): ${timerProvider.accumulatedUnpaidMinutes.toStringAsFixed(1)} דק\'',
+                              ? l.add_shift_timer_break_paid
+                              : l.add_shift_timer_break_unpaid)
+                        : '${l.add_shift_timer_total_break_unpaid} ${timerProvider.accumulatedUnpaidMinutes.toStringAsFixed(1)} ${l.common_min_suffix}',
                     style: TextStyle(
                       color: AppTheme.warningSoft,
                       fontWeight: FontWeight.w600,
@@ -640,7 +688,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
 
           // Controls section
           _FormSection(
-            title: 'פרטי משמרת',
+            title: l.add_shift_manual_work_tips_section,
             icon: Icons.work_outline_rounded,
             child: Column(
               children: [
@@ -648,9 +696,9 @@ class _AddShiftScreenState extends State<AddShiftScreen>
                   initialValue: (isRunning || isReviewMode)
                       ? timerProvider.jobTypeId
                       : _selectedJobTypeId,
-                  decoration: const InputDecoration(
-                    labelText: 'סוג עבודה',
-                    prefixIcon: Icon(Icons.work_rounded),
+                  decoration: InputDecoration(
+                    labelText: l.add_shift_manual_job_type_label,
+                    prefixIcon: const Icon(Icons.work_rounded),
                   ),
                   items: jobs
                       .map(
@@ -686,7 +734,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
           if (isRunning && !isReviewMode) ...[
             const SizedBox(height: AppTheme.spaceMd),
             _FormSection(
-              title: 'הפסקות',
+              title: l.add_shift_manual_break_type_section,
               icon: Icons.coffee_outlined,
               child: SegmentedButton<BreakType?>(
                 emptySelectionAllowed: true,
@@ -696,14 +744,14 @@ class _AddShiftScreenState extends State<AddShiftScreen>
                     value: BreakType.paid,
                     icon: const Icon(Icons.timer_outlined, size: 18),
                     label: Text(
-                      '${context.read<SettingsProvider>().paidBreakDurationMinutes.toStringAsFixed(0)}\' בתשלום',
+                      '${context.read<SettingsProvider>().paidBreakDurationMinutes.toStringAsFixed(0)}\' ${l.add_shift_manual_paid_break}',
                     ),
                   ),
                   ButtonSegment(
                     value: BreakType.unpaid,
                     icon: const Icon(Icons.coffee_outlined, size: 18),
                     label: Text(
-                      '${context.read<SettingsProvider>().unpaidBreakDurationMinutes.toStringAsFixed(0)}\' ללא',
+                      '${context.read<SettingsProvider>().unpaidBreakDurationMinutes.toStringAsFixed(0)}\' ${l.add_shift_manual_unpaid_break}',
                     ),
                   ),
                 ],
@@ -733,7 +781,9 @@ class _AddShiftScreenState extends State<AddShiftScreen>
                 icon: Icon(
                   isReviewMode ? Icons.check_rounded : Icons.stop_rounded,
                 ),
-                label: Text(isReviewMode ? 'שמור וסיים' : 'סיום משמרת'),
+                label: Text(
+                  isReviewMode ? l.common_save : l.add_shift_timer_stop_shift,
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: isReviewMode
                       ? AppTheme.profit
@@ -747,18 +797,17 @@ class _AddShiftScreenState extends State<AddShiftScreen>
               onPressed: () async {
                 final confirmed = await UIUtils.showConfirmDialog(
                   context: context,
-                  title: 'איפוס טיימר',
-                  content:
-                      'האם אתה בטוח שברצונך לאפס את הטיימר? כל המידע הנוכחי יימחק.',
+                  title: l.common_confirm,
+                  content: l.common_confirm,
                   isDestructive: true,
-                  confirmLabel: 'אפס',
+                  confirmLabel: l.common_back,
                 );
                 if (confirmed != true) return;
                 if (!mounted) return;
                 timerProvider.resetTimer();
               },
               child: Text(
-                'ביטול ואיפוס',
+                l.common_back,
                 style: TextStyle(
                   color: Theme.of(
                     context,
@@ -773,29 +822,28 @@ class _AddShiftScreenState extends State<AddShiftScreen>
 
   void _showFinishDialog() {
     context.read<TimerProvider>().stopShift();
+    final l = AppLocalizations.of(context)!;
 
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
-        title: const Text('סיום משמרת'),
-        content: const Text(
-          'הטיימר נעצר. האם ברצונך לשמור את המשמרת או להמשיך בעבודה?',
-        ),
+        title: Text(l.add_shift_timer_stop_shift),
+        content: Text(l.add_shift_timer_stopped_msg),
         actions: [
           TextButton(
             onPressed: () {
               Navigator.pop(ctx);
               context.read<TimerProvider>().resumeShift();
             },
-            child: const Text('המשך עבודה'),
+            child: Text(l.add_shift_timer_continue_work),
           ),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(ctx);
               _finishTimerShift();
             },
-            child: const Text('שמור וסיים'),
+            child: Text(l.common_save),
           ),
         ],
       ),
@@ -805,6 +853,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
   Widget _buildManualForm(List<JobType> jobs) {
     final settings = context.read<SettingsProvider>();
     final symbol = settings.currencySymbol;
+    final l = AppLocalizations.of(context)!;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(
@@ -817,13 +866,13 @@ class _AddShiftScreenState extends State<AddShiftScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _FormSection(
-            title: 'זמן',
+            title: l.add_shift_manual_time_section,
             icon: Icons.schedule_rounded,
             child: Column(
               children: [
                 _PickerTile(
                   icon: Icons.calendar_month_rounded,
-                  title: 'תאריך',
+                  title: l.add_shift_manual_date_label,
                   value: DateFormat('dd/MM/yyyy').format(_selectedDate),
                   onTap: () async {
                     final picked = await showDatePicker(
@@ -840,7 +889,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
                 const Divider(height: 1),
                 _PickerTile(
                   icon: Icons.access_time_rounded,
-                  title: 'שעת התחלה',
+                  title: l.add_shift_manual_start_time_label,
                   value: _startTime.format(context),
                   onTap: () async {
                     final picked = await showTimePicker(
@@ -855,7 +904,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
                 const Divider(height: 1),
                 _PickerTile(
                   icon: Icons.access_time_filled_rounded,
-                  title: 'שעת סיום',
+                  title: l.add_shift_manual_end_time_label,
                   value: _endTime.format(context),
                   onTap: () async {
                     final picked = await showTimePicker(
@@ -872,26 +921,26 @@ class _AddShiftScreenState extends State<AddShiftScreen>
           ),
           const SizedBox(height: AppTheme.spaceSm),
           _FormSection(
-            title: 'סוג הפסקה',
+            title: l.add_shift_manual_break_type_section,
             icon: Icons.coffee_outlined,
             child: SizedBox(
               width: double.infinity,
               child: SegmentedButton<BreakType>(
                 segments: [
-                  const ButtonSegment(
+                  ButtonSegment(
                     value: BreakType.none,
-                    label: Text('ללא'),
+                    label: Text(l.add_shift_manual_no_break),
                   ),
                   ButtonSegment(
                     value: BreakType.paid,
                     label: Text(
-                      '${settings.paidBreakDurationMinutes.toStringAsFixed(0)}\' בתשלום',
+                      '${settings.paidBreakDurationMinutes.toStringAsFixed(0)}\' ${l.add_shift_manual_paid_break}',
                     ),
                   ),
                   ButtonSegment(
                     value: BreakType.unpaid,
                     label: Text(
-                      '${settings.unpaidBreakDurationMinutes.toStringAsFixed(0)}\' ללא',
+                      '${settings.unpaidBreakDurationMinutes.toStringAsFixed(0)}\' ${l.add_shift_manual_unpaid_break}',
                     ),
                   ),
                 ],
@@ -903,15 +952,15 @@ class _AddShiftScreenState extends State<AddShiftScreen>
           ),
           const SizedBox(height: AppTheme.spaceSm),
           _FormSection(
-            title: 'עבודה וטיפים',
+            title: l.add_shift_manual_work_tips_section,
             icon: Icons.payments_outlined,
             child: Column(
               children: [
                 DropdownButtonFormField<String>(
                   initialValue: _selectedJobTypeId,
-                  decoration: const InputDecoration(
-                    labelText: 'סוג עבודה',
-                    prefixIcon: Icon(Icons.work_rounded),
+                  decoration: InputDecoration(
+                    labelText: l.add_shift_manual_job_type_label,
+                    prefixIcon: const Icon(Icons.work_rounded),
                   ),
                   items: jobs
                       .map(
@@ -943,7 +992,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
               onPressed: _saveManual,
               icon: const Icon(Icons.check_circle_rounded),
               label: Text(
-                widget.shiftToEdit != null ? 'עדכן משמרת' : 'שמור משמרת',
+                widget.shiftToEdit != null ? l.common_save : l.add_shift_title,
               ),
             ),
           ),
@@ -954,6 +1003,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
   }
 
   Widget _buildRawForm(List<JobType> jobs) {
+    final l = AppLocalizations.of(context)!;
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(
         AppTheme.spaceSm,
@@ -964,15 +1014,15 @@ class _AddShiftScreenState extends State<AddShiftScreen>
       child: Column(
         children: [
           _FormSection(
-            title: 'הדבקה חופשית',
+            title: l.add_shift_paste_title,
             icon: Icons.paste_rounded,
             child: Column(
               children: [
                 DropdownButtonFormField<String>(
                   initialValue: _selectedJobTypeId,
-                  decoration: const InputDecoration(
-                    labelText: 'סוג עבודה ברירת מחדל',
-                    prefixIcon: Icon(Icons.work_history_rounded),
+                  decoration: InputDecoration(
+                    labelText: l.add_shift_paste_default_job_label,
+                    prefixIcon: const Icon(Icons.work_history_rounded),
                   ),
                   items: jobs
                       .map(
@@ -1002,8 +1052,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          'פורמט: DD.MM[.YYYY] - HH:mm - HH:mm [הפסקה] [+ tips]\n'
-                          'הפסקות: ללא / 20 דקות / 45 דקות',
+                          l.add_shift_paste_format_info,
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(
                                 color: Theme.of(context).colorScheme.onSurface,
@@ -1026,9 +1075,8 @@ class _AddShiftScreenState extends State<AddShiftScreen>
               maxLines: null,
               keyboardType: TextInputType.multiline,
               textAlignVertical: TextAlignVertical.top,
-              decoration: const InputDecoration(
-                hintText:
-                    'הדבק משמרות כאן...\nלדוגמה:\n24.6.2026 - 17:30 - 23:00 45 דקות + 50',
+              decoration: InputDecoration(
+                hintText: l.add_shift_paste_hint,
                 alignLabelWithHint: true,
                 border: InputBorder.none,
                 enabledBorder: InputBorder.none,
@@ -1042,7 +1090,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
             child: ElevatedButton.icon(
               onPressed: _saveRaw,
               icon: const Icon(Icons.bolt_rounded),
-              label: const Text('פענח ושמור הכל'),
+              label: Text(l.add_shift_paste_parse_button),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primaryDark,
                 foregroundColor: Colors.white,
@@ -1059,6 +1107,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
     String symbol,
   ) {
     final total = _calculateTotalTips(controllers);
+    final l = AppLocalizations.of(context)!;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1066,7 +1115,10 @@ class _AddShiftScreenState extends State<AddShiftScreen>
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('טיפים', style: Theme.of(context).textTheme.titleSmall),
+            Text(
+              l.add_shift_tips_title,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
@@ -1074,7 +1126,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
-                'סה"כ ${UIUtils.formatCurrency(total, symbol: symbol)}',
+                '${l.add_shift_tips_total} ${UIUtils.formatCurrency(total, symbol: symbol)}',
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   color: AppTheme.profitSoft,
@@ -1108,13 +1160,13 @@ class _AddShiftScreenState extends State<AddShiftScreen>
                   Expanded(
                     child: TextField(
                       controller: controller,
-                      decoration: const InputDecoration(
-                        hintText: 'סכום טיפ',
+                      decoration: InputDecoration(
+                        hintText: l.add_shift_tips_hint,
                         filled: false,
                         border: InputBorder.none,
                         enabledBorder: InputBorder.none,
                         focusedBorder: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(
+                        contentPadding: const EdgeInsets.symmetric(
                           horizontal: 12,
                           vertical: 12,
                         ),
@@ -1125,7 +1177,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
                   ),
                   if (controllers.length > 1)
                     IconButton(
-                      tooltip: 'הסר',
+                      tooltip: l.common_cancel,
                       icon: const Icon(
                         Icons.remove_circle_outline_rounded,
                         color: AppTheme.expense,
@@ -1146,7 +1198,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
             controllers.add(TextEditingController(text: '0'));
           }),
           icon: const Icon(Icons.add_circle_outline_rounded),
-          label: const Text('הוסף טיפ'),
+          label: Text(l.add_shift_tips_add_button),
           style: TextButton.styleFrom(foregroundColor: AppTheme.primaryDark),
         ),
       ],
@@ -1158,6 +1210,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
     for (var c in _autoExpenseAmountControllers) {
       total += double.tryParse(c.text) ?? 0.0;
     }
+    final l = AppLocalizations.of(context)!;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1166,8 +1219,8 @@ class _AddShiftScreenState extends State<AddShiftScreen>
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'הוצאות למשמרת',
-              style: Theme.of(context).textTheme.titleSmall,
+              l.add_shift_expenses_title,
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -1176,7 +1229,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
-                'סה"כ -${UIUtils.formatCurrency(total, symbol: symbol)}',
+                '${l.add_shift_expenses_total} -${UIUtils.formatCurrency(total, symbol: symbol)}',
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   color: AppTheme.expenseSoft,
@@ -1196,7 +1249,9 @@ class _AddShiftScreenState extends State<AddShiftScreen>
                   flex: 2,
                   child: TextField(
                     controller: _autoExpenseDescControllers[index],
-                    decoration: const InputDecoration(labelText: 'תיאור'),
+                    decoration: InputDecoration(
+                      labelText: l.onboarding_auto_expenses_desc_label,
+                    ),
                     onChanged: (_) => setState(() {}),
                   ),
                 ),
@@ -1230,7 +1285,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
             _autoExpenseDescControllers.add(TextEditingController(text: ''));
           }),
           icon: const Icon(Icons.add_circle_outline_rounded),
-          label: const Text('הוסף הוצאה'),
+          label: Text(l.add_shift_expenses_add_button),
           style: TextButton.styleFrom(foregroundColor: AppTheme.primaryDark),
         ),
       ],
@@ -1262,7 +1317,7 @@ class _FormSection extends StatelessWidget {
             children: [
               Icon(icon, size: 18, color: AppTheme.primaryDark),
               const SizedBox(width: 8),
-              Text(title, style: Theme.of(context).textTheme.titleSmall),
+              Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
             ],
           ),
           const SizedBox(height: 14),

@@ -156,6 +156,12 @@ class NotificationService {
     required String shiftName,
     required DateTime startTime,
     required double reminderDurationHours,
+    required String title,
+    required String bodyTemplate,
+    required String hoursLabel,
+    required String minutesLabel,
+    required String channelName,
+    required String channelDescription,
   }) async {
     if (!_isSupported) return;
 
@@ -171,7 +177,6 @@ class NotificationService {
 
       final now = DateTime.now();
 
-      // Skip if reminder is in the past or within the next 5 minutes
       if (reminderTime.isBefore(now.add(const Duration(minutes: 5)))) {
         debugPrint(
           'Reminder too close or in past, skipping for battery saving.',
@@ -181,8 +186,8 @@ class NotificationService {
 
       final androidPlatformChannelSpecifics = AndroidNotificationDetails(
         'shift_reminder_channel',
-        'תזכורות משמרת',
-        channelDescription: 'תזכורת לפני תחילת משמרת',
+        channelName,
+        channelDescription: channelDescription,
         importance: Importance.high,
         priority: Priority.high,
       );
@@ -201,19 +206,20 @@ class NotificationService {
       );
 
       final String timeText = reminderDurationHours >= 1
-          ? '${reminderDurationHours.toStringAsFixed(0)} שעות'
-          : '${(reminderDurationHours * 60).toInt()} דקות';
+          ? '${reminderDurationHours.toStringAsFixed(0)} $hoursLabel'
+          : '${(reminderDurationHours * 60).toInt()} $minutesLabel';
 
-      // Convert wall-clock DateTime into the configured local TZ location.
-      // (uiLocalNotificationDateInterpretation was removed in plugin v18+;
-      // iOS 10+ UserNotifications uses the TZDateTime absolute instant.)
+      final String body = bodyTemplate
+          .replaceAll('[[name]]', shiftName)
+          .replaceAll('[[time]]', timeText);
+
       final scheduledDate = tz.TZDateTime.from(reminderTime, tz.local);
       final notificationId = toNotificationId(id);
 
       await _notificationsPlugin.zonedSchedule(
         id: notificationId,
-        title: 'תזכורת למשמרת',
-        body: 'המשמרת שלך ($shiftName) מתחילה בעוד $timeText!',
+        title: title,
+        body: body,
         scheduledDate: scheduledDate,
         notificationDetails: notificationDetails,
         androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
@@ -232,6 +238,12 @@ class NotificationService {
     required String title,
     required String body,
     required DateTime startTime,
+    required String channelName,
+    required String channelDescription,
+    required String stopActionLabel,
+    required String resumeActionLabel,
+    required String paidBreakActionLabel,
+    required String unpaidBreakActionLabel,
     bool isOnBreak = false,
   }) async {
     if (!_isSupported) return;
@@ -240,32 +252,32 @@ class NotificationService {
       final List<AndroidNotificationAction> androidActions = [];
       if (isOnBreak) {
         androidActions.add(
-          const AndroidNotificationAction(
+          AndroidNotificationAction(
             'end_break',
-            'חזור לעבודה',
+            resumeActionLabel,
             showsUserInterface: true,
           ),
         );
       } else {
         androidActions.add(
-          const AndroidNotificationAction(
+          AndroidNotificationAction(
             'start_paid_break',
-            'הפסקה בתשלום',
+            paidBreakActionLabel,
             showsUserInterface: true,
           ),
         );
         androidActions.add(
-          const AndroidNotificationAction(
+          AndroidNotificationAction(
             'start_unpaid_break',
-            'הפסקה לא בתשלום',
+            unpaidBreakActionLabel,
             showsUserInterface: true,
           ),
         );
       }
       androidActions.add(
-        const AndroidNotificationAction(
+        AndroidNotificationAction(
           'stop_shift',
-          'סיום',
+          stopActionLabel,
           showsUserInterface: true,
         ),
       );
@@ -273,8 +285,8 @@ class NotificationService {
       final AndroidNotificationDetails androidPlatformChannelSpecifics =
           AndroidNotificationDetails(
             'timer_channel',
-            'משמרת פעילה',
-            channelDescription: 'מציג את זמן המשמרת הנוכחית',
+            channelName,
+            channelDescription: channelDescription,
             importance: Importance.low,
             priority: Priority.low,
             ongoing: true,

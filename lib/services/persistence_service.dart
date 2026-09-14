@@ -1,4 +1,6 @@
+import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:shiftly/l10n/app_localizations.dart';
 import 'package:shiftly/models/automatic_expense.dart';
 import 'package:shiftly/models/break_type.dart';
 import 'package:shiftly/models/expense.dart';
@@ -32,25 +34,41 @@ class PersistenceService {
     // Seed default job types if empty
     final jobBox = Hive.box<JobType>(jobTypesBoxName);
     if (jobBox.isEmpty) {
+      final settings = settingsBox;
+      final localeCode = settings.get('locale', defaultValue: 'he');
+      final currency = settings.get('currencySymbol', defaultValue: '₪');
+      final l = lookupAppLocalizations(Locale(localeCode));
+
+      double buffetRate = 40.22;
+      double stewardRate = 37.20;
+      double unloadingRate = 40.22;
+
+      if (currency != '₪') {
+        // Adjust default rates for non-ILS currencies to be more realistic (USD/EUR/GBP)
+        buffetRate = 15.0;
+        stewardRate = 13.5;
+        unloadingRate = 15.0;
+      }
+
       final epoch = DateTime(2020, 1, 1);
       final defaultJobs = [
         JobType(
           id: '1',
-          name: 'מזנון',
-          hourlyRate: 40.22,
-          wageHistory: [WageEntry(startDate: epoch, hourlyRate: 40.22)],
+          name: l.default_job_buffet,
+          hourlyRate: buffetRate,
+          wageHistory: [WageEntry(startDate: epoch, hourlyRate: buffetRate)],
         ),
         JobType(
           id: '2',
-          name: 'סדרן',
-          hourlyRate: 37.20,
-          wageHistory: [WageEntry(startDate: epoch, hourlyRate: 37.20)],
+          name: l.default_job_steward,
+          hourlyRate: stewardRate,
+          wageHistory: [WageEntry(startDate: epoch, hourlyRate: stewardRate)],
         ),
         JobType(
           id: '3',
-          name: 'פריקה',
-          hourlyRate: 40.22,
-          wageHistory: [WageEntry(startDate: epoch, hourlyRate: 40.22)],
+          name: l.default_job_unloading,
+          hourlyRate: unloadingRate,
+          wageHistory: [WageEntry(startDate: epoch, hourlyRate: unloadingRate)],
         ),
       ];
       for (var job in defaultJobs) {
@@ -62,31 +80,47 @@ class PersistenceService {
   }
 
   Future<void> deleteAllData() async {
+    final settings = settingsBox;
+    final localeCode = settings.get('locale', defaultValue: 'he');
+    final currency = settings.get('currencySymbol', defaultValue: '₪');
+
     await shiftsBox.clear();
     await jobTypesBox.clear();
     await expensesBox.clear();
     await settingsBox.clear();
 
     // Re-seed default job types
+    final l = lookupAppLocalizations(Locale(localeCode));
+
+    double buffetRate = 40.22;
+    double stewardRate = 37.20;
+    double unloadingRate = 40.22;
+
+    if (currency != '₪') {
+      buffetRate = 15.0;
+      stewardRate = 13.5;
+      unloadingRate = 15.0;
+    }
+
     final epoch = DateTime(2020, 1, 1);
     final defaultJobs = [
       JobType(
         id: '1',
-        name: 'מזנון',
-        hourlyRate: 40.22,
-        wageHistory: [WageEntry(startDate: epoch, hourlyRate: 40.22)],
+        name: l.default_job_buffet,
+        hourlyRate: buffetRate,
+        wageHistory: [WageEntry(startDate: epoch, hourlyRate: buffetRate)],
       ),
       JobType(
         id: '2',
-        name: 'סדרן',
-        hourlyRate: 37.20,
-        wageHistory: [WageEntry(startDate: epoch, hourlyRate: 37.20)],
+        name: l.default_job_steward,
+        hourlyRate: stewardRate,
+        wageHistory: [WageEntry(startDate: epoch, hourlyRate: stewardRate)],
       ),
       JobType(
         id: '3',
-        name: 'פריקה',
-        hourlyRate: 40.22,
-        wageHistory: [WageEntry(startDate: epoch, hourlyRate: 40.22)],
+        name: l.default_job_unloading,
+        hourlyRate: unloadingRate,
+        wageHistory: [WageEntry(startDate: epoch, hourlyRate: unloadingRate)],
       ),
     ];
     for (var job in defaultJobs) {

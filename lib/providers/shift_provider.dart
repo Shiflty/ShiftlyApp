@@ -31,15 +31,15 @@ class ShiftProvider with ChangeNotifier {
     defaultValue: 4.0,
   );
 
-  Future<void> addShift(Shift shift) async {
+  Future<void> addShift(Shift shift, {Map<String, String>? l10n}) async {
     await _persistence.shiftsBox.put(shift.id, shift);
-    _scheduleReminder(shift);
+    _scheduleReminder(shift, l10n: l10n);
     notifyListeners();
   }
 
-  Future<void> updateShift(Shift shift) async {
+  Future<void> updateShift(Shift shift, {Map<String, String>? l10n}) async {
     await shift.save();
-    _scheduleReminder(shift);
+    _scheduleReminder(shift, l10n: l10n);
     notifyListeners();
   }
 
@@ -49,19 +49,26 @@ class ShiftProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void _scheduleReminder(Shift shift) {
-    if (!_remindersEnabled) return;
+  void _scheduleReminder(Shift shift, {Map<String, String>? l10n}) {
+    if (!_remindersEnabled || l10n == null) return;
 
     final job = getJobTypeById(shift.jobTypeId);
     NotificationService.scheduleShiftReminder(
       id: shift.id.hashCode,
-      shiftName: job?.name ?? 'משמרת',
+      shiftName: job?.name ?? 'Shift',
       startTime: shift.startTime,
       reminderDurationHours: _reminderDuration,
+      title: l10n['title'] ?? 'Shift Reminder',
+      bodyTemplate: l10n['body'] ?? 'Your shift ({name}) starts in {time}!',
+      hoursLabel: l10n['hours'] ?? 'hours',
+      minutesLabel: l10n['minutes'] ?? 'minutes',
+      channelName: l10n['channelName'] ?? 'Shift Reminders',
+      channelDescription:
+          l10n['channelDesc'] ?? 'Reminders before shift starts',
     );
   }
 
-  void refreshAllReminders() {
+  void refreshAllReminders(Map<String, String> l10n) {
     // Cancel all first
     for (var shift in shifts) {
       NotificationService.cancelNotification(shift.id.hashCode);
@@ -70,7 +77,7 @@ class ShiftProvider with ChangeNotifier {
     // Schedule only if enabled
     if (_remindersEnabled) {
       for (var shift in shifts) {
-        _scheduleReminder(shift);
+        _scheduleReminder(shift, l10n: l10n);
       }
     }
   }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:shiftly/l10n/app_localizations.dart';
 import 'package:shiftly/models/automatic_expense.dart';
 import 'package:shiftly/models/job_type.dart';
 import 'package:shiftly/models/wage_entry.dart';
@@ -53,7 +54,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     }
     if (_autoAmountControllers.isEmpty) {
       _autoAmountControllers.add(TextEditingController(text: '20'));
-      _autoDescControllers.add(TextEditingController(text: 'נסיעות'));
+      _autoDescControllers.add(TextEditingController(text: ''));
     }
   }
 
@@ -80,8 +81,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     }
   }
 
+  void _previousPage() {
+    if (_currentPage > 0) {
+      _pageController.previousPage(
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
+
   void _finishOnboarding() async {
     final settings = context.read<SettingsProvider>();
+    final l = AppLocalizations.of(context)!;
 
     List<AutomaticExpense> expenses = [];
     if (_autoExpenseEnabled) {
@@ -95,7 +106,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         if (desc.isEmpty) {
           UIUtils.showSnackBar(
             context,
-            'נא להזין תיאור לכל ההוצאות הקבועות',
+            l.settings_dialog_error_enter_desc,
             isError: true,
           );
           return;
@@ -103,7 +114,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         if (amount == null || amount <= 0) {
           UIUtils.showSnackBar(
             context,
-            'סכום ההוצאה "$desc" חייב להיות מספר גדול מ-0',
+            l.onboarding_auto_expenses_invalid_amount,
             isError: true,
           );
           return;
@@ -141,6 +152,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             Expanded(
               child: PageView(
                 controller: _pageController,
+                physics: const NeverScrollableScrollPhysics(),
                 onPageChanged: (page) => setState(() => _currentPage = page),
                 children: [
                   _buildPage(child: _buildWelcomePage()),
@@ -169,67 +181,49 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Widget _buildWelcomePage() {
+    final l = AppLocalizations.of(context)!;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         EssentialWorkIcon(size: 120, symbol: _currencySymbol),
         const SizedBox(height: 40),
-        const Text(
-          'ברוכים הבאים ל-Shiftly',
+        Text(
+          l.onboarding_welcome_title,
           textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 32,
-            fontWeight: FontWeight.bold,
-            fontFamily: 'Arial',
-          ),
+          style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 20),
-        const Text(
-          'האפליקציה שתעזור לך לעקוב אחרי המשמרות, השכר והטיפים שלך בקלות ובדיוק.',
+        Text(
+          l.onboarding_welcome_subtitle,
           textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 18,
-            color: Colors.grey,
-            fontFamily: 'Arial',
-          ),
+          style: const TextStyle(fontSize: 18, color: Colors.grey),
         ),
         const SizedBox(height: 40),
-        const Text(
-          'בוא נגדיר כמה דברים בסיסיים כדי להתחיל.',
+        Text(
+          l.onboarding_welcome_description,
           textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-            fontFamily: 'Arial',
-          ),
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
         ),
       ],
     );
   }
 
   Widget _buildCurrencyPage() {
+    final l = AppLocalizations.of(context)!;
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Icon(Icons.payments_outlined, size: 64, color: Colors.blue),
         const SizedBox(height: 24),
-        const Text(
-          'בחירת מטבע',
-          style: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-            fontFamily: 'Arial',
-          ),
+        Text(
+          l.onboarding_currency_title,
+          style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 16),
-        const Text(
-          'באיזה מטבע תרצה להשתמש להצגת השכר וההוצאות?',
-          style: TextStyle(
-            fontSize: 16,
-            color: Colors.grey,
-            fontFamily: 'Arial',
-          ),
+        Text(
+          l.onboarding_currency_subtitle,
+          style: const TextStyle(fontSize: 16, color: Colors.grey),
         ),
         const SizedBox(height: 40),
         SizedBox(
@@ -251,38 +245,31 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Widget _buildBreakSettingsPage() {
+    final l = AppLocalizations.of(context)!;
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Icon(Icons.timer_outlined, size: 64, color: Colors.blue),
         const SizedBox(height: 24),
-        const Text(
-          'הגדרות הפסקה',
-          style: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-            fontFamily: 'Arial',
-          ),
+        Text(
+          l.onboarding_breaks_title,
+          style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 16),
-        const Text(
-          'כמה זמן נמשכת הפסקה בדרך כלל?',
-          style: TextStyle(
-            fontSize: 16,
-            color: Colors.grey,
-            fontFamily: 'Arial',
-          ),
+        Text(
+          l.onboarding_breaks_subtitle,
+          style: const TextStyle(fontSize: 16, color: Colors.grey),
         ),
         const SizedBox(height: 40),
         _buildDurationSlider(
-          label: 'הפסקה בתשלום (דקות)',
+          label: l.onboarding_breaks_paid_label,
           value: _paidMinutes,
           onChanged: (val) => setState(() => _paidMinutes = val),
         ),
         const SizedBox(height: 32),
         _buildDurationSlider(
-          label: 'הפסקה ללא תשלום (דקות)',
+          label: l.onboarding_breaks_unpaid_label,
           value: _unpaidMinutes,
           onChanged: (val) => setState(() => _unpaidMinutes = val),
         ),
@@ -291,6 +278,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Widget _buildReminderSettingsPage() {
+    final l = AppLocalizations.of(context)!;
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -301,29 +289,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           color: Colors.blue,
         ),
         const SizedBox(height: 24),
-        const Text(
-          'תזכורות למשמרת',
-          style: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-            fontFamily: 'Arial',
-          ),
+        Text(
+          l.onboarding_reminders_title,
+          style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 16),
-        const Text(
-          'האם תרצה לקבל תזכורת לפני שהמשמרת מתחילה?',
-          style: TextStyle(
-            fontSize: 16,
-            color: Colors.grey,
-            fontFamily: 'Arial',
-          ),
+        Text(
+          l.onboarding_reminders_subtitle,
+          style: const TextStyle(fontSize: 16, color: Colors.grey),
         ),
         const SizedBox(height: 40),
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
-          title: const Text(
-            'הפעל תזכורות',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+          title: Text(
+            l.onboarding_reminders_enable,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
           ),
           value: _remindersEnabled,
           onChanged: (val) => setState(() => _remindersEnabled = val),
@@ -333,12 +313,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         if (_remindersEnabled) ...[
           const SizedBox(height: 32),
           _buildDurationSlider(
-            label: 'כמה זמן לפני? (שעות)',
+            label: l.onboarding_reminders_time_label,
             value: _reminderHours,
             min: 0.5,
             max: 24,
             divisions: 47,
-            displaySuffix: 'שעות',
+            displaySuffix: l.onboarding_reminders_hours,
             onChanged: (val) => setState(() => _reminderHours = val),
           ),
         ],
@@ -347,35 +327,28 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Widget _buildAutoExpensePage() {
+    final l = AppLocalizations.of(context)!;
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Icon(Icons.auto_fix_high_rounded, size: 64, color: Colors.blue),
         const SizedBox(height: 24),
-        const Text(
-          'הוצאות קבועות',
-          style: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-            fontFamily: 'Arial',
-          ),
+        Text(
+          l.onboarding_auto_expenses_title,
+          style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 16),
-        const Text(
-          'האם יש לך הוצאות קבועות בכל משמרת? (למשל נסיעות)',
-          style: TextStyle(
-            fontSize: 16,
-            color: Colors.grey,
-            fontFamily: 'Arial',
-          ),
+        Text(
+          l.onboarding_auto_expenses_subtitle,
+          style: const TextStyle(fontSize: 16, color: Colors.grey),
         ),
         const SizedBox(height: 40),
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
-          title: const Text(
-            'הפעל הוצאות אוטומטיות',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+          title: Text(
+            l.onboarding_auto_expenses_enable,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
           ),
           value: _autoExpenseEnabled,
           onChanged: (val) => setState(() => _autoExpenseEnabled = val),
@@ -394,7 +367,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               _autoDescControllers.add(TextEditingController(text: ''));
             }),
             icon: const Icon(Icons.add_circle_outline_rounded),
-            label: const Text('הוסף הוצאה'),
+            label: Text(l.onboarding_auto_expenses_add_button),
           ),
         ],
       ],
@@ -402,6 +375,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Widget _buildAutoExpenseRow(int index, String symbol) {
+    final l = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
       child: Row(
@@ -410,7 +384,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             flex: 2,
             child: TextField(
               controller: _autoDescControllers[index],
-              decoration: const InputDecoration(labelText: 'תיאור'),
+              decoration: InputDecoration(
+                labelText: l.onboarding_auto_expenses_desc_label,
+              ),
             ),
           ),
           const SizedBox(width: 8),
@@ -442,21 +418,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     double min = 0,
     double max = 120,
     int divisions = 24,
-    String displaySuffix = 'דק\'',
+    String displaySuffix = '',
   }) {
+    if (displaySuffix.isEmpty) {
+      displaySuffix = AppLocalizations.of(context)!.common_min_suffix;
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              label,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontFamily: 'Arial',
-              ),
-            ),
+            Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
             Text(
               '${(value * 10).round() / 10} $displaySuffix'.replaceAll(
                 '.0 ',
@@ -484,6 +457,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final shiftProvider = context.watch<ShiftProvider>();
     final symbol = context.watch<SettingsProvider>().currencySymbol;
     final jobTypes = shiftProvider.jobTypes;
+    final l = AppLocalizations.of(context)!;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -495,22 +469,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             children: [
               const Icon(Icons.work_outline, size: 64, color: Colors.blue),
               const SizedBox(height: 24),
-              const Text(
-                'סוגי משמרות ושכר',
-                style: TextStyle(
+              Text(
+                l.onboarding_job_types_title,
+                style: const TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
-                  fontFamily: 'Arial',
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
-                'הגדר את התפקידים השונים שלך ואת השכר לשעה.',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey,
-                  fontFamily: 'Arial',
-                ),
+              Text(
+                l.onboarding_job_types_subtitle,
+                style: const TextStyle(fontSize: 16, color: Colors.grey),
               ),
             ],
           ),
@@ -527,7 +496,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     child: TextButton.icon(
                       onPressed: _addNewJobType,
                       icon: const Icon(Icons.add),
-                      label: const Text('הוסף סוג משמרת'),
+                      label: Text(l.onboarding_job_types_add_button),
                     ),
                   ),
                 );
@@ -541,7 +510,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   subtitle: Text(
-                    '${UIUtils.formatCurrency(job.getRateForDate(DateTime.now()), symbol: symbol)} לשעה',
+                    '${UIUtils.formatCurrency(job.getRateForDate(DateTime.now()), symbol: symbol)} ${l.onboarding_job_types_rate_suffix}',
                   ),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -556,15 +525,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           color: Colors.red,
                         ),
                         onPressed: () async {
+                          final provider = context.read<ShiftProvider>();
                           final confirmed = await UIUtils.showConfirmDialog(
                             context: context,
-                            title: 'מחיקת תפקיד',
-                            content: 'האם למחוק את התפקיד "${job.name}"?',
+                            title: l.common_delete,
+                            content: '${l.common_delete} ${job.name}?',
                             isDestructive: true,
-                            confirmLabel: 'מחק',
+                            confirmLabel: l.common_delete,
+                            cancelLabel: l.common_cancel,
                           );
                           if (confirmed == true && context.mounted) {
-                            context.read<ShiftProvider>().deleteJobType(job.id);
+                            provider.deleteJobType(job.id);
                           }
                         },
                       ),
@@ -580,6 +551,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   void _editJobType(JobType job) {
+    final l = AppLocalizations.of(context)!;
     final nameController = TextEditingController(text: job.name);
     final rateController = TextEditingController(
       text: job.getRateForDate(DateTime.now()).toString(),
@@ -589,21 +561,25 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: const Text('ערוך סוג משמרת'),
+          title: Text(l.common_save),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 controller: nameController,
-                decoration: const InputDecoration(labelText: 'שם התפקיד'),
+                decoration: InputDecoration(
+                  labelText: l.onboarding_auto_expenses_desc_label,
+                ),
               ),
               TextField(
                 controller: rateController,
-                decoration: const InputDecoration(labelText: 'שכר לשעה'),
+                decoration: InputDecoration(
+                  labelText: l.onboarding_auto_expenses_amount_label,
+                ),
                 keyboardType: TextInputType.number,
               ),
               ListTile(
-                title: const Text('תאריך תחילה'),
+                title: Text(l.common_back),
                 subtitle: Text(DateFormat('dd/MM/yyyy').format(effectiveDate)),
                 trailing: const Icon(Icons.calendar_today_rounded),
                 onTap: () async {
@@ -623,7 +599,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('ביטול'),
+              child: Text(l.common_cancel),
             ),
             ElevatedButton(
               onPressed: () async {
@@ -633,9 +609,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 if (name.isEmpty) return;
                 final confirmed = await UIUtils.showConfirmDialog(
                   context: context,
-                  title: 'עדכון תפקיד',
-                  content:
-                      'האם לעדכן את "$name" החל מיום ${DateFormat('dd/MM/yyyy').format(effectiveDate)}?',
+                  title: l.common_confirm,
+                  content: '${l.common_confirm} $name?',
                 );
                 if (confirmed != true || !context.mounted) return;
                 final history = List<WageEntry>.from(job.wageHistory ?? [])
@@ -648,7 +623,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 if (!context.mounted) return;
                 Navigator.pop(context);
               },
-              child: const Text('שמור'),
+              child: Text(l.common_save),
             ),
           ],
         ),
@@ -657,22 +632,27 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   void _addNewJobType() {
+    final l = AppLocalizations.of(context)!;
     final nameController = TextEditingController();
     final rateController = TextEditingController();
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('סוג משמרת חדש'),
+        title: Text(l.onboarding_job_types_add_button),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: nameController,
-              decoration: const InputDecoration(labelText: 'שם התפקיד'),
+              decoration: InputDecoration(
+                labelText: l.onboarding_auto_expenses_desc_label,
+              ),
             ),
             TextField(
               controller: rateController,
-              decoration: const InputDecoration(labelText: 'שכר לשעה'),
+              decoration: InputDecoration(
+                labelText: l.onboarding_auto_expenses_amount_label,
+              ),
               keyboardType: TextInputType.number,
             ),
           ],
@@ -680,7 +660,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('ביטול'),
+            child: Text(l.common_cancel),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -698,7 +678,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               context.read<ShiftProvider>().addJobType(newJob);
               Navigator.pop(context);
             },
-            child: const Text('הוסף'),
+            child: Text(l.common_confirm),
           ),
         ],
       ),
@@ -706,11 +686,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Widget _buildFooter() {
+    final l = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.all(24.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
+          if (_currentPage > 0)
+            TextButton.icon(
+              onPressed: _previousPage,
+              icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 16),
+              label: Text(l.common_back),
+            )
+          else
+            const SizedBox(width: 80),
           Row(
             children: List.generate(
               6,
@@ -729,7 +718,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ),
           ElevatedButton(
             onPressed: _nextPage,
-            child: Text(_currentPage == 5 ? 'בוא נתחיל!' : 'המשך'),
+            child: Text(_currentPage == 5 ? l.common_start : l.common_continue),
           ),
         ],
       ),

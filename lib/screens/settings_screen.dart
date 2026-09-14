@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:shiftly/l10n/app_localizations.dart';
 import 'package:shiftly/models/job_type.dart';
 import 'package:shiftly/models/wage_entry.dart';
 import 'package:shiftly/providers/settings_provider.dart';
@@ -41,7 +42,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _showEditJobDialog(BuildContext context, [JobType? job]) {
-    final symbol = context.read<SettingsProvider>().currencySymbol;
+    final settings = context.read<SettingsProvider>();
+    final symbol = settings.currencySymbol;
+    final l = AppLocalizations.of(context)!;
     final nameController = TextEditingController(text: job?.name ?? '');
     final rateController = TextEditingController(
       text: (job?.hourlyRate ?? 40.22).toString(),
@@ -52,29 +55,33 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: Text(job == null ? 'הוספת סוג עבודה' : 'עריכת סוג עבודה'),
+          title: Text(
+            job == null ? l.onboarding_job_types_add_button : l.common_save,
+          ),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextField(
                   controller: nameController,
-                  decoration: const InputDecoration(labelText: 'שם התפקיד'),
+                  decoration: InputDecoration(
+                    labelText: l.onboarding_auto_expenses_desc_label,
+                  ),
                 ),
                 const SizedBox(height: AppTheme.spaceSm),
                 TextField(
                   controller: rateController,
-                  decoration: const InputDecoration(
-                    labelText: 'תעריף שעתי (חדש)',
+                  decoration: InputDecoration(
+                    labelText: l.onboarding_auto_expenses_amount_label,
                   ),
                   keyboardType: TextInputType.number,
                 ),
                 const SizedBox(height: AppTheme.spaceSm),
                 ListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: const Text(
-                    'תאריך תחילה',
-                    style: TextStyle(fontSize: 14),
+                  title: Text(
+                    l.add_shift_manual_date_label,
+                    style: const TextStyle(fontSize: 14),
                   ),
                   subtitle: Text(
                     DateFormat('dd/MM/yyyy').format(effectiveDate),
@@ -96,11 +103,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     job.wageHistory != null &&
                     job.wageHistory!.isNotEmpty) ...[
                   const Divider(height: AppTheme.spaceLg),
-                  const Align(
-                    alignment: Alignment.centerRight,
+                  Align(
+                    alignment: AlignmentDirectional.centerStart,
                     child: Text(
-                      'היסטוריית שכר',
-                      style: TextStyle(
+                      l.settings_wage_history_title,
+                      style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
                       ),
@@ -120,7 +127,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('ביטול'),
+              child: Text(l.common_cancel),
             ),
             ElevatedButton(
               onPressed: () async {
@@ -131,7 +138,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 if (name.isEmpty) {
                   UIUtils.showSnackBar(
                     context,
-                    'נא להזין שם לתפקיד',
+                    l.settings_dialog_error_enter_desc, // Better key?
                     isError: true,
                   );
                   return;
@@ -144,28 +151,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 );
 
                 if (exists) {
-                  UIUtils.showSnackBar(
-                    context,
-                    'תפקיד בשם זה כבר קיים',
-                    isError: true,
-                  );
+                  UIUtils.showSnackBar(context, l.common_error, isError: true);
                   return;
                 }
 
                 if (rate < 0) {
-                  UIUtils.showSnackBar(
-                    context,
-                    'השכר לא יכול להיות שלילי',
-                    isError: true,
-                  );
+                  UIUtils.showSnackBar(context, l.common_error, isError: true);
                   return;
                 }
 
                 final confirmed = await UIUtils.showConfirmDialog(
                   context: context,
-                  title: job == null ? 'הוספת תפקיד' : 'עדכון תפקיד',
-                  content:
-                      'האם לשמור את התפקיד "$name" עם שכר של ${UIUtils.formatCurrency(rate, symbol: context.read<SettingsProvider>().currencySymbol)} החל מיום ${DateFormat('dd/MM/yyyy').format(effectiveDate)}?',
+                  title: job == null ? l.common_confirm : l.common_save,
+                  content: '${l.common_save} $name?',
                 );
 
                 if (confirmed != true) return;
@@ -202,7 +200,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 }
                 if (context.mounted) Navigator.pop(ctx);
               },
-              child: const Text('שמור'),
+              child: Text(l.common_save),
             ),
           ],
         ),
@@ -213,13 +211,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _deleteJob(BuildContext context, JobType job) async {
     final provider = context.read<ShiftProvider>();
     final name = job.name;
+    final l = AppLocalizations.of(context)!;
 
     final confirmed = await UIUtils.showConfirmDialog(
       context: context,
-      title: 'מחיקת תפקיד',
-      content: 'האם אתה בטוח שברצונך למחוק את התפקיד "$name"?',
+      title: l.common_delete,
+      content: '${l.common_delete} $name?',
       isDestructive: true,
-      confirmLabel: 'מחק',
+      confirmLabel: l.common_delete,
     );
 
     if (confirmed != true) return;
@@ -229,9 +228,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     UIUtils.showSnackBar(
       context,
-      'תפקיד "$name" נמחק',
+      '$name ${l.common_delete}',
       action: SnackBarAction(
-        label: 'ביטול',
+        label: l.common_back,
         onPressed: () {
           provider.addJobType(job);
         },
@@ -244,21 +243,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final settings = context.watch<SettingsProvider>();
     final symbol = settings.currencySymbol;
     final rawJobs = context.watch<ShiftProvider>().jobTypes;
+    final l = AppLocalizations.of(context)!;
 
     final jobs = List<JobType>.from(rawJobs)
       ..sort((a, b) {
-        if (a.name.contains('מזנון')) return -1;
-        if (b.name.contains('מזנון')) return 1;
-        if (a.name.contains('סדרן')) return -1;
-        if (b.name.contains('סדרן')) return 1;
+        if (a.id == '1') return -1;
+        if (b.id == '1') return 1;
+        if (a.id == '2') return -1;
+        if (b.id == '2') return 1;
         return a.name.compareTo(b.name);
       });
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'הגדרות',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        title: Text(
+          l.settings_title,
+          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
       body: SafeArea(
@@ -271,14 +271,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
             120, // Increased for ad space and system navigation
           ),
           children: [
-            _buildSectionHeader(context, 'אפליקציה'),
+            _buildSectionHeader(context, l.settings_section_app),
             const SizedBox(height: AppTheme.spaceXs),
             Card(
               child: Column(
                 children: [
                   SwitchListTile(
-                    title: const Text('התראות'),
-                    subtitle: const Text('אפשר שליחת התראות מהאפליקציה'),
+                    title: Text(l.settings_field_notifications),
+                    subtitle: Text(l.settings_field_notifications_sub),
                     secondary: Icon(
                       Icons.notifications_active_outlined,
                       color: AppTheme.primaryDark,
@@ -290,7 +290,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         await NotificationService.requestPermissions();
                       }
                       if (!context.mounted) return;
-                      context.read<ShiftProvider>().refreshAllReminders();
+                      context.read<ShiftProvider>().refreshAllReminders({
+                        'title': l.notification_reminder_title,
+                        'body': l.notification_reminder_body,
+                        'hours': l.common_hours_suffix,
+                        'minutes': l.common_min_suffix,
+                        'channelName': l.notification_channel_reminders_name,
+                        'channelDesc': l.notification_channel_reminders_desc,
+                      });
                     },
                     activeThumbColor: AppTheme.primaryDark,
                     activeTrackColor: AppTheme.primary.withValues(alpha: 0.35),
@@ -301,27 +308,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'ערכת נושא',
-                          style: TextStyle(fontWeight: FontWeight.w500),
+                        Text(
+                          l.settings_field_theme,
+                          style: const TextStyle(fontWeight: FontWeight.w500),
                         ),
                         const SizedBox(height: 12),
                         SegmentedButton<ThemeMode>(
-                          segments: const [
+                          segments: [
                             ButtonSegment(
                               value: ThemeMode.system,
-                              label: Text('מערכת'),
-                              icon: Icon(Icons.brightness_auto_rounded),
+                              label: Text(l.settings_theme_system),
+                              icon: const Icon(Icons.brightness_auto_rounded),
                             ),
                             ButtonSegment(
                               value: ThemeMode.light,
-                              label: Text('יום'),
-                              icon: Icon(Icons.light_mode_rounded),
+                              label: Text(l.settings_theme_light),
+                              icon: const Icon(Icons.light_mode_rounded),
                             ),
                             ButtonSegment(
                               value: ThemeMode.dark,
-                              label: Text('לילה'),
-                              icon: Icon(Icons.dark_mode_rounded),
+                              label: Text(l.settings_theme_dark),
+                              icon: const Icon(Icons.dark_mode_rounded),
                             ),
                           ],
                           selected: {settings.themeMode},
@@ -333,8 +340,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   const Divider(height: 1, indent: 56),
                   ListTile(
-                    title: const Text('מטבע תצוגה'),
-                    subtitle: const Text('המטבע שיוצג עבור שכר והוצאות'),
+                    title: Text(l.settings_field_language),
+                    leading: const Icon(
+                      Icons.language_rounded,
+                      color: AppTheme.primaryDark,
+                    ),
+                    trailing: SegmentedButton<String>(
+                      segments: [
+                        ButtonSegment(
+                          value: 'he',
+                          label: Text(l.settings_language_he),
+                        ),
+                        ButtonSegment(
+                          value: 'en',
+                          label: Text(l.settings_language_en),
+                        ),
+                      ],
+                      selected: {settings.locale.languageCode},
+                      onSelectionChanged: (val) {
+                        settings.setLocale(Locale(val.first));
+                      },
+                    ),
+                  ),
+                  const Divider(height: 1, indent: 56),
+                  ListTile(
+                    title: Text(l.settings_field_currency),
+                    subtitle: Text(l.settings_field_currency_sub),
                     leading: const Icon(
                       Icons.payments_outlined,
                       color: AppTheme.primaryDark,
@@ -358,7 +389,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             if (settings.shiftRemindersEnabled) ...[
               const SizedBox(height: AppTheme.spaceLg),
-              _buildSectionHeader(context, 'תזכורות משמרת'),
+              _buildSectionHeader(context, l.settings_section_reminders),
               const SizedBox(height: AppTheme.spaceXs),
               Card(
                 child: Padding(
@@ -368,12 +399,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
-                            'זמן תזכורת (שעות)',
-                            style: TextStyle(fontWeight: FontWeight.w500),
+                          Text(
+                            l.settings_field_reminder_time,
+                            style: const TextStyle(fontWeight: FontWeight.w500),
                           ),
                           Text(
-                            '${(settings.shiftReminderDurationHours * 10).round() / 10} שעות'
+                            '${(settings.shiftReminderDurationHours * 10).round() / 10} ${l.common_hours_suffix}'
                                 .replaceAll('.0 ', ' '),
                             style: const TextStyle(
                               color: AppTheme.primaryDark,
@@ -390,7 +421,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         onChanged: (val) async {
                           await settings.setShiftReminderDurationHours(val);
                           if (!context.mounted) return;
-                          context.read<ShiftProvider>().refreshAllReminders();
+                          context.read<ShiftProvider>().refreshAllReminders({
+                            'title': l.notification_reminder_title,
+                            'body': l.notification_reminder_body,
+                            'hours': l.common_hours_suffix,
+                            'minutes': l.common_min_suffix,
+                            'channelName':
+                                l.notification_channel_reminders_name,
+                            'channelDesc':
+                                l.notification_channel_reminders_desc,
+                          });
                         },
                       ),
                     ],
@@ -399,7 +439,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ],
             const SizedBox(height: AppTheme.spaceLg),
-            _buildSectionHeader(context, 'זמני הפסקות (דקות)'),
+            _buildSectionHeader(context, l.settings_section_breaks),
             const SizedBox(height: AppTheme.spaceXs),
             Card(
               child: Padding(
@@ -408,18 +448,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   children: [
                     TextField(
                       controller: _paidController,
-                      decoration: const InputDecoration(
-                        labelText: 'הפסקה קצרה (בתשלום)',
-                        prefixIcon: Icon(Icons.timer_outlined),
+                      decoration: InputDecoration(
+                        labelText: l.settings_field_paid_break,
+                        prefixIcon: const Icon(Icons.timer_outlined),
                       ),
                       keyboardType: TextInputType.number,
                     ),
                     const SizedBox(height: AppTheme.spaceSm),
                     TextField(
                       controller: _unpaidController,
-                      decoration: const InputDecoration(
-                        labelText: 'הפסקה ארוכה (ללא תשלום)',
-                        prefixIcon: Icon(Icons.coffee_outlined),
+                      decoration: InputDecoration(
+                        labelText: l.settings_field_unpaid_break,
+                        prefixIcon: const Icon(Icons.coffee_outlined),
                       ),
                       keyboardType: TextInputType.number,
                     ),
@@ -435,18 +475,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                           final confirmed = await UIUtils.showConfirmDialog(
                             context: context,
-                            title: 'עדכון זמני הפסקה',
+                            title: l.settings_dialog_update_breaks_title,
                             content:
-                                'האם לעדכן את זמני ברירת המחדל ל-$paid דק\' בתשלום ו-$unpaid דק\' ללא תשלום?',
+                                '${l.settings_dialog_update_breaks_title}?',
                           );
 
                           if (confirmed != true) return;
                           if (!context.mounted) return;
 
                           settings.setBreakDurations(paid, unpaid);
-                          UIUtils.showSnackBar(context, 'זמני ההפסקות עודכנו');
+                          UIUtils.showSnackBar(context, l.common_success);
                         },
-                        child: const Text('עדכן זמנים'),
+                        child: Text(l.settings_action_update_breaks),
                       ),
                     ),
                   ],
@@ -457,12 +497,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
             Row(
               children: [
                 Expanded(
-                  child: _buildSectionHeader(context, 'סוגי עבודות ותעריפים'),
+                  child: _buildSectionHeader(
+                    context,
+                    l.onboarding_job_types_title,
+                  ),
                 ),
                 TextButton.icon(
                   onPressed: () => _showEditJobDialog(context),
                   icon: const Icon(Icons.add_rounded),
-                  label: const Text('הוסף'),
+                  label: Text(l.common_confirm),
                   style: TextButton.styleFrom(
                     foregroundColor: AppTheme.primaryDark,
                   ),
@@ -470,12 +513,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ],
             ),
             const SizedBox(height: AppTheme.spaceXs),
-            if (jobs.isEmpty)
+            if (rawJobs.isEmpty)
               Padding(
                 padding: const EdgeInsets.all(AppTheme.spaceMd),
                 child: Center(
                   child: Text(
-                    'לא נמצאו תפקידים.',
+                    l.common_error,
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ),
@@ -490,20 +533,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               ),
             const SizedBox(height: AppTheme.spaceLg),
-            _buildSectionHeader(context, 'אזור מסוכן'),
+            _buildSectionHeader(context, l.settings_section_danger),
             const SizedBox(height: AppTheme.spaceXs),
             Card(
               child: ListTile(
-                title: const Text(
-                  'איפוס נתונים מלא',
-                  style: TextStyle(
+                title: Text(
+                  l.settings_action_factory_reset,
+                  style: const TextStyle(
                     color: AppTheme.expense,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                subtitle: const Text(
-                  'מחיקת כל המשמרות, התפקידים וההוצאות לצמיתות',
-                ),
+                subtitle: Text(l.settings_action_factory_reset_sub),
                 trailing: const Icon(
                   Icons.delete_forever_rounded,
                   color: AppTheme.expense,
@@ -518,13 +559,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _handleFactoryReset(BuildContext context) async {
+    final l = AppLocalizations.of(context)!;
     // Step 1: First Confirmation
     final confirmed = await UIUtils.showConfirmDialog(
       context: context,
-      title: 'איפוס נתונים?',
-      content:
-          'האם אתה בטוח שברצונך למחוק את כל נתוני העבודה ולאפס את האפליקציה? פעולה זו אינה ניתנת לביטול.',
-      confirmLabel: 'המשך',
+      title: l.settings_dialog_factory_reset_title,
+      content: l.settings_dialog_factory_reset_content,
+      confirmLabel: l.common_continue,
       isDestructive: true,
     );
 
@@ -539,25 +580,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
           children: [
             const Icon(Icons.warning_amber_rounded, color: AppTheme.expense),
             const SizedBox(width: 8),
-            const Text('אישור סופי ומוחלט'),
+            Text(l.settings_dialog_final_confirm_title),
           ],
         ),
-        content: const Column(
+        content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('שימו לב: כל היסטוריית המשמרות, השכר וההוצאות תימחק לעד.'),
-            SizedBox(height: 16),
+            Text(l.settings_dialog_final_confirm_content_1),
+            const SizedBox(height: 16),
             Text(
-              'האם אתה בטוח שברצונך למחוק הכל?',
-              style: TextStyle(fontWeight: FontWeight.bold),
+              l.settings_dialog_final_confirm_content_2,
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('ביטול', style: TextStyle(color: Colors.grey)),
+            child: Text(
+              l.common_cancel,
+              style: const TextStyle(color: Colors.grey),
+            ),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
@@ -565,7 +609,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               backgroundColor: AppTheme.expense,
               foregroundColor: Colors.white,
             ),
-            child: const Text('מחק הכל לצמיתות'),
+            child: Text(l.settings_dialog_final_confirm_button),
           ),
         ],
       ),
@@ -583,7 +627,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     if (!context.mounted) return;
 
-    UIUtils.showSnackBar(context, 'האפליקציה אותחלה בהצלחה');
+    UIUtils.showSnackBar(context, l.common_success);
 
     // Navigate to Splash or Onboarding
     Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
@@ -618,6 +662,7 @@ class _JobCard extends StatelessWidget {
     final currentRate = job.getRateForDate(DateTime.now());
     final history = List<WageEntry>.from(job.wageHistory ?? const [])
       ..sort((a, b) => b.startDate.compareTo(a.startDate));
+    final l = AppLocalizations.of(context)!;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: AppTheme.spaceSm),
@@ -655,7 +700,7 @@ class _JobCard extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          '${UIUtils.formatCurrency(currentRate, symbol: symbol)} לשעה',
+                          '${UIUtils.formatCurrency(currentRate, symbol: symbol)} ${l.onboarding_job_types_rate_suffix}',
                           style: TextStyle(
                             color: AppTheme.primaryDark,
                             fontWeight: FontWeight.w600,
@@ -666,7 +711,7 @@ class _JobCard extends StatelessWidget {
                     ),
                   ),
                   IconButton(
-                    tooltip: 'עריכה',
+                    tooltip: l.common_save,
                     icon: const Icon(
                       Icons.edit_note_rounded,
                       color: AppTheme.primaryDark,
@@ -674,7 +719,7 @@ class _JobCard extends StatelessWidget {
                     onPressed: onEdit,
                   ),
                   IconButton(
-                    tooltip: 'מחיקה',
+                    tooltip: l.common_delete,
                     icon: const Icon(
                       Icons.delete_outline_rounded,
                       color: AppTheme.expense,
@@ -688,7 +733,7 @@ class _JobCard extends StatelessWidget {
                 const Divider(height: 1),
                 const SizedBox(height: AppTheme.spaceSm),
                 Text(
-                  'היסטוריית שכר',
+                  l.settings_wage_history_title,
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                     color: Theme.of(
                       context,
@@ -725,6 +770,7 @@ class _WageTimeline extends StatelessWidget {
       ..sort((a, b) => b.startDate.compareTo(a.startDate));
     final items = maxItems != null ? sorted.take(maxItems!).toList() : sorted;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l = AppLocalizations.of(context)!;
 
     return Column(
       children: List.generate(items.length, (index) {
@@ -809,8 +855,8 @@ class _WageTimeline extends StatelessWidget {
                             ),
                             if (isFirst && !compact)
                               Text(
-                                'תעריף נוכחי',
-                                style: TextStyle(
+                                l.settings_current_rate,
+                                style: const TextStyle(
                                   fontSize: 11,
                                   color: AppTheme.primaryDark,
                                   fontWeight: FontWeight.w600,

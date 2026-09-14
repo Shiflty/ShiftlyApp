@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:shiftly/l10n/app_localizations.dart';
 import 'package:shiftly/models/break_type.dart';
 import 'package:shiftly/models/shift.dart';
 import 'package:shiftly/providers/settings_provider.dart';
@@ -38,6 +39,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
   Widget build(BuildContext context) {
     final shiftProvider = context.watch<ShiftProvider>();
     final allShifts = shiftProvider.shifts;
+    final l = AppLocalizations.of(context)!;
     final selectedShifts = _getShiftsForDay(
       _selectedDay ?? _focusedDay,
       allShifts,
@@ -45,9 +47,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'לוח משמרות',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        title: Text(
+          l.home_action_calendar,
+          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
       body: SafeArea(
@@ -75,7 +77,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     ],
                   ),
                   child: TableCalendar<Shift>(
-                    locale: 'he_IL',
+                    locale: l.localeName,
                     firstDay: DateTime.utc(2020, 1, 1),
                     lastDay: DateTime.utc(2030, 12, 31),
                     focusedDay: _focusedDay,
@@ -188,8 +190,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     const SizedBox(width: 8),
                     Text(
                       _selectedDay == null
-                          ? 'בחר יום להצגת משמרות'
-                          : 'משמרות ב-${DateFormat('dd/MM').format(_selectedDay!)}',
+                          ? l.home_shift_list_select_day
+                          : '${l.home_shift_list_shifts_on}${DateFormat('dd/MM').format(_selectedDay!)}',
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
@@ -213,9 +215,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
                         color: Colors.grey.withValues(alpha: 0.3),
                       ),
                       const SizedBox(height: 12),
-                      const Text(
-                        'אין משמרות ביום זה',
-                        style: TextStyle(color: Colors.grey),
+                      Text(
+                        l.home_shift_list_no_shifts,
+                        style: const TextStyle(color: Colors.grey),
                       ),
                     ],
                   ),
@@ -251,18 +253,19 @@ class _CalendarShiftTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final shiftProvider = context.read<ShiftProvider>();
     final settings = context.watch<SettingsProvider>();
+    final l = AppLocalizations.of(context)!;
+    final symbol = settings.currencySymbol;
     final job = shiftProvider.getJobTypeById(shift.jobTypeId);
     final rate = shift.hourlyRate ?? job?.getRateForDate(shift.date) ?? 40.22;
-    final symbol = settings.currencySymbol;
     final pay = shift.calculateTotalPay(rate);
 
     String breakInfo = "";
     if ((shift.breakType ?? BreakType.none) == BreakType.paid) {
       breakInfo =
-          " (${settings.paidBreakDurationMinutes.toStringAsFixed(0)} דק' בתשלום)";
+          " (${settings.paidBreakDurationMinutes.toStringAsFixed(0)} ${l.common_min_suffix} ${l.add_shift_manual_paid_break})";
     } else if ((shift.breakType ?? BreakType.none) == BreakType.unpaid) {
       breakInfo =
-          " (${(shift.unpaidBreakMinutes ?? settings.unpaidBreakDurationMinutes).toStringAsFixed(0)} דק' ללא תשלום)";
+          " (${(shift.unpaidBreakMinutes ?? settings.unpaidBreakDurationMinutes).toStringAsFixed(0)} ${l.common_min_suffix} ${l.add_shift_manual_unpaid_break})";
     }
 
     return Dismissible(
@@ -282,10 +285,10 @@ class _CalendarShiftTile extends StatelessWidget {
         final dateStr = DateFormat('dd/MM/yyyy').format(shift.date);
         return await UIUtils.showConfirmDialog(
           context: context,
-          title: 'מחיקת משמרת',
-          content: 'האם אתה בטוח שברצונך למחוק את המשמרת מיום $dateStr?',
+          title: l.common_delete,
+          content: '${l.common_delete} $dateStr?',
           isDestructive: true,
-          confirmLabel: 'מחק',
+          confirmLabel: l.common_delete,
         );
       },
       onDismissed: (_) {
@@ -294,11 +297,21 @@ class _CalendarShiftTile extends StatelessWidget {
 
         UIUtils.showSnackBar(
           context,
-          'משמרת מיום $dateStr נמחקה',
+          '$dateStr ${l.common_delete}',
           action: SnackBarAction(
-            label: 'ביטול',
+            label: l.common_back,
             onPressed: () {
-              shiftProvider.addShift(shift);
+              shiftProvider.addShift(
+                shift,
+                l10n: {
+                  'title': l.notification_reminder_title,
+                  'body': l.notification_reminder_body,
+                  'hours': l.common_hours_suffix,
+                  'minutes': l.common_min_suffix,
+                  'channelName': l.notification_channel_reminders_name,
+                  'channelDesc': l.notification_channel_reminders_desc,
+                },
+              );
             },
           ),
         );
@@ -338,12 +351,12 @@ class _CalendarShiftTile extends StatelessWidget {
             ),
           ),
           title: Text(
-            "${job?.name ?? 'לא ידוע'}$breakInfo",
+            "${job?.name ?? l.common_error}$breakInfo",
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
           ),
           subtitle: Text(
             "${DateFormat.Hm().format(shift.startTime)} - ${DateFormat.Hm().format(shift.endTime)} | "
-            "${shift.netHours.toStringAsFixed(2)} ש'",
+            "${shift.netHours.toStringAsFixed(2)} ${l.common_hours_suffix}",
             style: const TextStyle(fontSize: 12),
           ),
           trailing: Column(
@@ -407,4 +420,9 @@ class _CalendarShiftTile extends StatelessWidget {
       ),
     );
   }
+}
+
+bool isSameDay(DateTime? a, DateTime? b) {
+  if (a == null || b == null) return false;
+  return a.year == b.year && a.month == b.month && a.day == b.day;
 }

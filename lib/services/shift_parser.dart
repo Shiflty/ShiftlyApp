@@ -6,7 +6,8 @@ class ShiftParser {
   static final Uuid _uuid = const Uuid();
 
   /// Parses strings like:
-  /// "24.6.2026 - 17:00 - 23:00 ללא + 50"
+  /// "24.6.2026 - 17:00 - 23:00 none + 50"
+  /// "24.6 - 17:00 - 23:00 45 minutes + 50"
   /// "24.6 - 17:00 - 23:00 45 דקות + 50"
   static Shift? parse(
     String input,
@@ -30,7 +31,7 @@ class ShiftParser {
       final dateStr = match.group(1)!;
       final startTimeStr = match.group(2)!;
       final endTimeStr = match.group(3)!;
-      final breakStr = match.group(4)?.trim() ?? "";
+      final breakStr = (match.group(4)?.trim() ?? "").toLowerCase();
       final tipsStr = match.group(5);
 
       final now = DateTime.now();
@@ -72,19 +73,21 @@ class ShiftParser {
       BreakType breakType = BreakType.none;
       double currentUnpaidMins = unpaidMinutes;
 
-      if (breakStr.contains('ללא')) {
+      if (breakStr.contains('ללא') || breakStr.contains('none')) {
         breakType = BreakType.none;
       } else if (breakStr.contains('${paidMinutes.toStringAsFixed(0)} דקות') ||
-          breakStr.contains('${paidMinutes.toStringAsFixed(0)} דק')) {
+          breakStr.contains('${paidMinutes.toStringAsFixed(0)} דק') ||
+          breakStr.contains('${paidMinutes.toStringAsFixed(0)} min')) {
         breakType = BreakType.paid;
       } else if (breakStr.contains(
             '${unpaidMinutes.toStringAsFixed(0)} דקות',
           ) ||
-          breakStr.contains('${unpaidMinutes.toStringAsFixed(0)} דק')) {
+          breakStr.contains('${unpaidMinutes.toStringAsFixed(0)} דק') ||
+          breakStr.contains('${unpaidMinutes.toStringAsFixed(0)} min')) {
         breakType = BreakType.unpaid;
       } else {
-        // Fallback: try to find any number followed by "דקות"
-        final numRegex = RegExp(r'(\d+)\s*דקות');
+        // Fallback: try to find any number followed by minutes keywords
+        final numRegex = RegExp(r'(\d+)\s*(?:דקות|דק|min|minutes)');
         final numMatch = numRegex.firstMatch(breakStr);
         if (numMatch != null) {
           final val = double.parse(numMatch.group(1)!);

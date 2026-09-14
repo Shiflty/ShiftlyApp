@@ -18,6 +18,8 @@ class SettingsProvider with ChangeNotifier {
   bool _automaticExpenseEnabled = false;
   List<AutomaticExpense> _defaultAutomaticExpenses = [];
   String _currencySymbol = '₪';
+  Locale _locale = const Locale('he', 'IL');
+  bool _breaksEnabled = true;
 
   ThemeMode get themeMode => _themeMode;
 
@@ -37,6 +39,10 @@ class SettingsProvider with ChangeNotifier {
       _defaultAutomaticExpenses;
 
   String get currencySymbol => _currencySymbol;
+
+  Locale get locale => _locale;
+
+  bool get breaksEnabled => _breaksEnabled;
 
   void _loadSettings() {
     final box = _persistence.settingsBox;
@@ -67,6 +73,12 @@ class SettingsProvider with ChangeNotifier {
       defaultValue: false,
     );
     _currencySymbol = box.get('currencySymbol', defaultValue: '₪');
+    final String? localeCode = box.get('locale');
+    if (localeCode != null) {
+      _locale = Locale(localeCode);
+    } else {
+      _locale = const Locale('he', 'IL');
+    }
 
     final List? storedExpenses = box.get('defaultAutomaticExpenses');
     if (storedExpenses != null) {
@@ -115,6 +127,12 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> setLocale(Locale locale) async {
+    _locale = locale;
+    await _persistence.settingsBox.put('locale', locale.languageCode);
+    notifyListeners();
+  }
+
   Future<void> updateDefaultAutomaticExpenses(
     List<AutomaticExpense> expenses,
   ) async {
@@ -139,6 +157,7 @@ class SettingsProvider with ChangeNotifier {
     _automaticExpenseEnabled = false;
     _defaultAutomaticExpenses = [];
     _currencySymbol = '₪';
+    _locale = const Locale('he', 'IL');
     notifyListeners();
   }
 }

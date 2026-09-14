@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
+import 'package:shiftly/l10n/app_localizations.dart';
 import 'package:shiftly/providers/settings_provider.dart';
 import 'package:shiftly/providers/shift_provider.dart';
 import 'package:shiftly/providers/timer_provider.dart';
@@ -83,14 +84,40 @@ class SalaryTrackerApp extends StatelessWidget {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: settings.themeMode,
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: const [Locale('he', 'IL')],
-      locale: const Locale('he', 'IL'),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      locale: settings.locale,
       home: const SplashScreen(),
+      builder: (context, child) {
+        return L10nSync(child: child!);
+      },
     );
+  }
+}
+
+class L10nSync extends StatelessWidget {
+  final Widget child;
+
+  const L10nSync({super.key, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<TimerProvider>().updateL10n({
+        'titleActive': l.notification_timer_title_active,
+        'titlePaid': l.notification_timer_title_paid_break,
+        'titleUnpaid': l.notification_timer_title_unpaid_break,
+        'bodyRunning': l.notification_timer_body_running,
+        'bodyCountdown': l.notification_timer_body_countdown,
+        'channelName': l.notification_timer_channel_name,
+        'channelDesc': l.notification_timer_channel_desc,
+        'stop': l.add_shift_timer_stop_shift,
+        'resume': l.add_shift_timer_resume_work,
+        'paidBreak': l.add_shift_manual_paid_break,
+        'unpaidBreak': l.add_shift_manual_unpaid_break,
+      });
+    });
+    return child;
   }
 }

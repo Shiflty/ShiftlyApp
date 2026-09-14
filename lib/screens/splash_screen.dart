@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shiftly/l10n/app_localizations.dart';
 import 'package:shiftly/providers/settings_provider.dart';
 import 'package:shiftly/screens/home_screen.dart';
 import 'package:shiftly/screens/onboarding_screen.dart';
@@ -70,6 +71,7 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     return Scaffold(
       body: Container(
         width: double.infinity,
@@ -99,13 +101,12 @@ class _SplashScreenState extends State<SplashScreen>
                 const SizedBox(height: 32),
                 FadeTransition(
                   opacity: _fadeAnimation,
-                  child: const Text(
-                    'Shiftly',
-                    style: TextStyle(
+                  child: Text(
+                    l.common_app_name,
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 48,
                       fontWeight: FontWeight.bold,
-                      fontFamily: 'Arial',
                       letterSpacing: 1.2,
                     ),
                   ),
@@ -113,12 +114,11 @@ class _SplashScreenState extends State<SplashScreen>
                 const SizedBox(height: 8),
                 FadeTransition(
                   opacity: _fadeAnimation,
-                  child: const Text(
-                    'מעקב שעות עבודה חכם',
-                    style: TextStyle(
+                  child: Text(
+                    l.common_tagline,
+                    style: const TextStyle(
                       color: Color(0xFF38BDF8),
                       fontSize: 16,
-                      fontFamily: 'Arial',
                       letterSpacing: 0.5,
                     ),
                   ),

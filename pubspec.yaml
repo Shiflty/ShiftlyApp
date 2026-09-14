@@ -84,6 +84,7 @@ flutter_launcher_icons:
 # The following section is specific to Flutter packages.
 flutter:
   uses-material-design: true
+  generate: true
   assets:
     - assets/icon/
 

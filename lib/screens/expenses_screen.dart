@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:shiftly/l10n/app_localizations.dart';
 import 'package:shiftly/models/automatic_expense.dart';
 import 'package:shiftly/models/expense.dart';
 import 'package:shiftly/providers/settings_provider.dart';
@@ -32,7 +33,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     }
     if (_autoAmountControllers.isEmpty) {
       _autoAmountControllers.add(TextEditingController(text: '0'));
-      _autoDescControllers.add(TextEditingController(text: 'נסיעות'));
+      _autoDescControllers.add(TextEditingController(text: ''));
     }
   }
 
@@ -49,6 +50,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
 
   Future<void> _saveDefaultExpenses() async {
     final settings = context.read<SettingsProvider>();
+    final l = AppLocalizations.of(context)!;
     List<AutomaticExpense> expenses = [];
     for (int i = 0; i < _autoAmountControllers.length; i++) {
       final amountText = _autoAmountControllers[i].text.trim();
@@ -60,7 +62,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
       if (desc.isEmpty) {
         UIUtils.showSnackBar(
           context,
-          'נא להזין תיאור לכל ההוצאות הקבועות',
+          l.settings_dialog_error_enter_desc,
           isError: true,
         );
         return;
@@ -68,7 +70,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
       if (amount == null || amount <= 0) {
         UIUtils.showSnackBar(
           context,
-          'סכום ההוצאה "$desc" חייב להיות מספר גדול מ-0',
+          l.onboarding_auto_expenses_invalid_amount,
           isError: true,
         );
         return;
@@ -77,12 +79,14 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     }
     await settings.updateDefaultAutomaticExpenses(expenses);
     if (mounted) {
-      UIUtils.showSnackBar(context, 'הגדרות הוצאות אוטומטיות עודכנו');
+      UIUtils.showSnackBar(context, l.expenses_auto_updated_msg);
     }
   }
 
   void _showExpenseDialog(BuildContext context, [Expense? expense]) {
-    final symbol = context.read<SettingsProvider>().currencySymbol;
+    final settings = context.read<SettingsProvider>();
+    final symbol = settings.currencySymbol;
+    final l = AppLocalizations.of(context)!;
     final descriptionController = TextEditingController(
       text: expense?.description ?? '',
     );
@@ -95,7 +99,11 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: Text(expense == null ? 'הוספת הוצאה' : 'עריכת הוצאה'),
+          title: Text(
+            expense == null
+                ? l.expenses_dialog_add_title
+                : l.expenses_dialog_edit_title,
+          ),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -121,8 +129,8 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                 ),
                 TextField(
                   controller: descriptionController,
-                  decoration: const InputDecoration(
-                    labelText: 'תיאור ההוצאה (למשל: אוטובוס)',
+                  decoration: InputDecoration(
+                    labelText: l.onboarding_auto_expenses_desc_label,
                   ),
                   textInputAction: TextInputAction.next,
                 ),
@@ -130,7 +138,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                 TextField(
                   controller: amountController,
                   decoration: InputDecoration(
-                    labelText: 'סכום ($symbol)',
+                    labelText: '${l.expenses_total_label} ($symbol)',
                     prefixIcon: const Icon(Icons.sell_rounded),
                   ),
                   keyboardType: const TextInputType.numberWithOptions(
@@ -143,7 +151,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('ביטול'),
+              child: Text(l.common_cancel),
             ),
             ElevatedButton(
               onPressed: () async {
@@ -153,7 +161,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                 if (desc.isEmpty) {
                   UIUtils.showSnackBar(
                     context,
-                    'נא להזין תיאור להוצאה',
+                    l.settings_dialog_error_enter_desc,
                     isError: true,
                   );
                   return;
@@ -162,7 +170,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                 if (amount <= 0) {
                   UIUtils.showSnackBar(
                     context,
-                    'סכום ההוצאה חייב להיות גדול מ-0',
+                    l.onboarding_auto_expenses_invalid_amount,
                     isError: true,
                   );
                   return;
@@ -170,9 +178,17 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
 
                 final confirmed = await UIUtils.showConfirmDialog(
                   context: context,
-                  title: expense == null ? 'הוספת הוצאה' : 'עדכון הוצאה',
-                  content:
-                      'האם לשמור את ההוצאה "$desc" בסך ${UIUtils.formatCurrency(amount, symbol: symbol)}?',
+                  title: expense == null
+                      ? l.expenses_dialog_add_title
+                      : l.expenses_dialog_edit_title,
+                  content: l.expenses_save_expense_confirm_content
+                      .replaceAll('[[desc]]', desc)
+                      .replaceAll(
+                        '[[amount]]',
+                        UIUtils.formatCurrency(amount, symbol: symbol),
+                      ),
+                  cancelLabel: l.common_cancel,
+                  confirmLabel: l.common_save,
                 );
 
                 if (confirmed != true || !context.mounted) return;
@@ -195,7 +211,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                 }
                 Navigator.pop(ctx);
               },
-              child: const Text('שמור'),
+              child: Text(l.common_save),
             ),
           ],
         ),
@@ -207,13 +223,14 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
   Widget build(BuildContext context) {
     final shiftProvider = context.watch<ShiftProvider>();
     final settings = context.watch<SettingsProvider>();
+    final l = AppLocalizations.of(context)!;
     final groupedExpenses = shiftProvider.expensesGroupedByMonth;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'ניהול הוצאות',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        title: Text(
+          l.expenses_title,
+          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
       body: SafeArea(
@@ -228,7 +245,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildSectionHeader(context, 'הוצאות קבועות למשמרת'),
+              _buildSectionHeader(context, l.expenses_auto_section_title),
               const SizedBox(height: AppTheme.spaceXs),
               Card(
                 child: Padding(
@@ -237,10 +254,8 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                     children: [
                       SwitchListTile(
                         contentPadding: EdgeInsets.zero,
-                        title: const Text('הוצאות אוטומטיות'),
-                        subtitle: const Text(
-                          'הוסף הוצאות קבועות לכל משמרת חדשה',
-                        ),
+                        title: Text(l.expenses_auto_section_enable),
+                        subtitle: Text(l.expenses_auto_section_subtitle),
                         secondary: const Icon(
                           Icons.auto_fix_high_rounded,
                           color: AppTheme.primaryDark,
@@ -272,14 +287,14 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                             );
                           }),
                           icon: const Icon(Icons.add_circle_outline_rounded),
-                          label: const Text('הוסף הוצאה קבועה'),
+                          label: Text(l.expenses_action_add_auto),
                         ),
                         const SizedBox(height: 16),
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
                             onPressed: _saveDefaultExpenses,
-                            child: const Text('עדכן הגדרות'),
+                            child: Text(l.expenses_action_update_settings),
                           ),
                         ),
                       ],
@@ -288,13 +303,13 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                 ),
               ),
               const SizedBox(height: AppTheme.spaceLg),
-              _buildSectionHeader(context, 'פירוט הוצאות חודשי'),
+              _buildSectionHeader(context, l.expenses_history_section_title),
               const SizedBox(height: AppTheme.spaceXs),
               if (groupedExpenses.isEmpty)
-                const Center(
+                Center(
                   child: Padding(
-                    padding: EdgeInsets.symmetric(vertical: 40),
-                    child: Text('אין הוצאות רשומות'),
+                    padding: const EdgeInsets.symmetric(vertical: 40),
+                    child: Text(l.home_shift_list_no_shifts),
                   ),
                 )
               else
@@ -320,13 +335,14 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
         onPressed: () => _showExpenseDialog(context),
         backgroundColor: AppTheme.expenseSoft,
         foregroundColor: Colors.white,
-        label: const Text('הוצאה חדשה'),
+        label: Text(l.expenses_action_new_expense),
         icon: const Icon(Icons.add_rounded),
       ),
     );
   }
 
   Widget _buildAutoExpenseRow(int index, String symbol) {
+    final l = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
       child: Row(
@@ -335,9 +351,8 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
             flex: 2,
             child: TextField(
               controller: _autoDescControllers[index],
-              decoration: const InputDecoration(
-                labelText: 'תיאור',
-                hintText: 'למשל: נסיעות',
+              decoration: InputDecoration(
+                labelText: l.onboarding_auto_expenses_desc_label,
               ),
             ),
           ),
@@ -390,9 +405,11 @@ class _MonthExpenseSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final symbol = context.watch<SettingsProvider>().currencySymbol;
+    final settings = context.watch<SettingsProvider>();
+    final symbol = settings.currencySymbol;
+    final l = AppLocalizations.of(context)!;
     final date = DateTime.parse("$monthKey-01");
-    final monthName = DateFormat.MMMM('he_IL').format(date);
+    final monthName = DateFormat.MMMM(l.localeName).format(date);
     final total = expenses.fold<double>(0, (sum, e) => sum + e.amount);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -410,7 +427,7 @@ class _MonthExpenseSection extends StatelessWidget {
                 ),
               ),
               Text(
-                'סה"כ: ${UIUtils.formatCurrency(total, symbol: symbol)}',
+                '${l.expenses_total_label}: ${UIUtils.formatCurrency(total, symbol: symbol)}',
                 style: const TextStyle(
                   fontWeight: FontWeight.w600,
                   color: AppTheme.expenseSoft,
@@ -443,6 +460,7 @@ class _ExpenseTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final shiftProvider = context.read<ShiftProvider>();
+    final l = AppLocalizations.of(context)!;
     return Dismissible(
       key: Key(expense.id),
       direction: DismissDirection.startToEnd,
@@ -461,19 +479,24 @@ class _ExpenseTile extends StatelessWidget {
       ),
       confirmDismiss: (direction) async => await UIUtils.showConfirmDialog(
         context: context,
-        title: 'מחיקת הוצאה',
-        content:
-            'האם למחוק את "${expense.description}" בסך ${UIUtils.formatCurrency(expense.amount, symbol: symbol)}?',
+        title: l.expenses_dialog_delete_title,
+        content: l.expenses_delete_expense_confirm_content
+            .replaceAll('[[desc]]', expense.description)
+            .replaceAll(
+              '[[amount]]',
+              UIUtils.formatCurrency(expense.amount, symbol: symbol),
+            ),
         isDestructive: true,
-        confirmLabel: 'מחק',
+        confirmLabel: l.common_delete,
+        cancelLabel: l.common_cancel,
       ),
       onDismissed: (_) {
         shiftProvider.deleteExpense(expense.id);
         UIUtils.showSnackBar(
           context,
-          'הוצאה נמחקה',
+          l.expenses_deleted_msg,
           action: SnackBarAction(
-            label: 'ביטול',
+            label: l.common_cancel,
             onPressed: () => shiftProvider.addExpense(expense),
           ),
         );

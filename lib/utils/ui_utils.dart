@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/l10n/app_localizations.dart';
 import 'package:shiftly/theme/app_theme.dart';
 
 class UIUtils {
@@ -84,11 +85,12 @@ class UIUtils {
     required BuildContext context,
     required String title,
     required String content,
-    String confirmLabel = 'אישור',
-    String cancelLabel = 'ביטול',
+    String? confirmLabel,
+    String? cancelLabel,
     Color? confirmColor,
     bool isDestructive = false,
   }) async {
+    final l = AppLocalizations.of(context)!;
     final result = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -98,7 +100,7 @@ class UIUtils {
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
             child: Text(
-              cancelLabel,
+              cancelLabel ?? l.common_cancel,
               style: TextStyle(
                 color: Theme.of(
                   ctx,
@@ -116,7 +118,7 @@ class UIUtils {
                   : null,
               minimumSize: const Size(88, 44),
             ),
-            child: Text(confirmLabel),
+            child: Text(confirmLabel ?? l.common_confirm),
           ),
         ],
       ),

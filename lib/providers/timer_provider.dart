@@ -6,328 +6,259 @@ import 'package:shiftly/services/notification_service.dart';
 import 'package:shiftly/services/persistence_service.dart';
 
 class TimerProvider with ChangeNotifier {
-  final PersistenceService _persistence;
-  Timer? _ticker;
+  final PersistenceService persistence;
 
-  TimerProvider(this._persistence) {
+  TimerProvider(this.persistence) {
     _loadState();
-    NotificationService.onActionReceived = (actionId) {
-      final box = _persistence.settingsBox;
-      final paidDur = box.get('paidBreakDurationMinutes', defaultValue: 20.0);
-      final unpaidDur = box.get(
-        'unpaidBreakDurationMinutes',
-        defaultValue: 45.0,
-      );
-
-      if (actionId == 'start_paid_break') {
-        toggleBreak(BreakType.paid, paidDur);
-      } else if (actionId == 'start_unpaid_break') {
-        toggleBreak(BreakType.unpaid, unpaidDur);
-      } else if (actionId == 'end_break') {
-        endBreak();
-      } else if (actionId == 'stop_shift') {
-        stopShift();
-      }
-    };
   }
 
-  DateTime? _startTime;
-  DateTime? _reviewEndTime;
-  bool _isRunning = false;
+  static const int timerNotificationId = 9999;
 
-  bool _isOnBreak = false;
+  DateTime? _startTime;
+  String? _jobTypeId;
+  bool _isRunning = false;
+  DateTime? _reviewEndTime;
+
+  // Break state
   BreakType? _activeBreakType;
   DateTime? _breakStartTime;
-  double _activeBreakDurationMinutes = 0.0;
+  double _accumulatedUnpaidMinutes = 0;
+  double _totalPaidBreakMinutes = 0;
 
-  // Total seconds to deduct from (now - startTime)
-  // This includes finished unpaid breaks and pauses in review mode.
-  double _totalDeductedSeconds = 0.0;
-
-  String? _jobTypeId;
-  double _tips = 0.0;
+  Timer? _ticker;
+  Duration _elapsed = Duration.zero;
+  Duration _breakRemaining = Duration.zero;
 
   DateTime? get startTime => _startTime;
 
-  DateTime? get reviewEndTime => _reviewEndTime;
+  String? get jobTypeId => _jobTypeId;
 
   bool get isRunning => _isRunning;
 
-  bool get isOnBreak => _isOnBreak;
+  DateTime? get reviewEndTime => _reviewEndTime;
 
   BreakType? get activeBreakType => _activeBreakType;
 
-  // For the Shift model: only unpaid break time is stored here
-  double get accumulatedUnpaidMinutes {
-    // We don't want to include "pauses" from review mode in the official "Break" field of the shift,
-    // but for the sake of the Shift model's netHours calculation, we can treat them as unpaid break.
-    return _totalDeductedSeconds / 60.0;
-  }
+  bool get isOnBreak => _activeBreakType != null;
 
-  String? get jobTypeId => _jobTypeId;
+  double get accumulatedUnpaidMinutes => _accumulatedUnpaidMinutes;
 
-  double get tips => _tips;
+  Duration get elapsed => _elapsed;
 
-  Duration get elapsed {
-    if (_startTime == null) return Duration.zero;
-
-    DateTime end;
-    double currentDeduction = _totalDeductedSeconds;
-
-    if (_isOnBreak) {
-      end = _breakStartTime!;
-      // If currently on unpaid break, time is already "frozen" at _breakStartTime.
-      // If it's a PAID break, the clock keeps running, so we use now.
-      if (_activeBreakType == BreakType.paid) {
-        end = _isRunning ? DateTime.now() : (_reviewEndTime ?? DateTime.now());
-      }
-    } else {
-      end = _isRunning ? DateTime.now() : (_reviewEndTime ?? DateTime.now());
-    }
-
-    final duration =
-        end.difference(_startTime!).inSeconds - currentDeduction.toInt();
-    return Duration(seconds: duration < 0 ? 0 : duration);
-  }
-
-  Duration get breakRemaining {
-    if (!_isOnBreak || _breakStartTime == null) return Duration.zero;
-    final elapsedBreak = DateTime.now().difference(_breakStartTime!);
-    final totalBreak = Duration(
-      seconds: (_activeBreakDurationMinutes * 60).toInt(),
-    );
-    final remaining = totalBreak - elapsedBreak;
-    return remaining.isNegative ? Duration.zero : remaining;
-  }
-
-  double get netMinutes {
-    if (_startTime == null) return 0.0;
-    return elapsed.inSeconds / 60.0;
-  }
-
-  double calculateLivePay(double hourlyRate) {
-    return (netMinutes / 60.0 * hourlyRate) + _tips;
-  }
+  Duration get breakRemaining => _breakRemaining;
 
   void _loadState() {
-    final box = _persistence.settingsBox;
-    final startMillis = box.get('timerStartTime');
+    final box = persistence.settingsBox;
+    final startMillis = box.get('timer_start');
     if (startMillis != null) {
       _startTime = DateTime.fromMillisecondsSinceEpoch(startMillis);
-      _isRunning = box.get('timerIsRunning', defaultValue: true);
+      _jobTypeId = box.get('timer_job_id');
+      _isRunning = box.get('timer_running', defaultValue: false);
+      _accumulatedUnpaidMinutes = box.get(
+        'timer_unpaid_break',
+        defaultValue: 0.0,
+      );
+
+      final breakTypeIdx = box.get('timer_break_type');
+      if (breakTypeIdx != null) {
+        _activeBreakType = BreakType.values[breakTypeIdx];
+        final breakStartMillis = box.get('timer_break_start');
+        if (breakStartMillis != null) {
+          _breakStartTime = DateTime.fromMillisecondsSinceEpoch(
+            breakStartMillis,
+          );
+        }
+      }
+
+      if (_isRunning) {
+        _startTicker();
+      } else if (_startTime != null) {
+        _reviewEndTime = DateTime.fromMillisecondsSinceEpoch(
+          box.get(
+            'timer_review_end',
+            defaultValue: DateTime.now().millisecondsSinceEpoch,
+          ),
+        );
+        _updateElapsed();
+      }
     }
+  }
 
-    final reviewEndMillis = box.get('timerReviewEndTime');
-    if (reviewEndMillis != null) {
-      _reviewEndTime = DateTime.fromMillisecondsSinceEpoch(reviewEndMillis);
+  void _persistState() {
+    final box = persistence.settingsBox;
+    box.put('timer_start', _startTime?.millisecondsSinceEpoch);
+    box.put('timer_job_id', _jobTypeId);
+    box.put('timer_running', _isRunning);
+    box.put('timer_unpaid_break', _accumulatedUnpaidMinutes);
+    box.put('timer_break_type', _activeBreakType?.index);
+    box.put('timer_break_start', _breakStartTime?.millisecondsSinceEpoch);
+    box.put('timer_review_end', _reviewEndTime?.millisecondsSinceEpoch);
+  }
+
+  void startShift(String jobTypeId) {
+    _startTime = DateTime.now();
+    _jobTypeId = jobTypeId;
+    _isRunning = true;
+    _reviewEndTime = null;
+    _accumulatedUnpaidMinutes = 0;
+    _activeBreakType = null;
+    _persistState();
+    _startTicker();
+    notifyListeners();
+  }
+
+  void stopShift() {
+    _isRunning = false;
+    _reviewEndTime = DateTime.now();
+    _ticker?.cancel();
+    _persistState();
+    NotificationService.cancelNotification(timerNotificationId);
+    notifyListeners();
+  }
+
+  void resumeShift() {
+    _isRunning = true;
+    _reviewEndTime = null;
+    _persistState();
+    _startTicker();
+    notifyListeners();
+  }
+
+  void resetTimer() {
+    _startTime = null;
+    _jobTypeId = null;
+    _isRunning = false;
+    _reviewEndTime = null;
+    _activeBreakType = null;
+    _accumulatedUnpaidMinutes = 0;
+    _ticker?.cancel();
+    _elapsed = Duration.zero;
+    _persistState();
+    NotificationService.cancelNotification(timerNotificationId);
+    notifyListeners();
+  }
+
+  void toggleBreak(BreakType type, double durationMinutes) {
+    if (_activeBreakType == type) {
+      endBreak();
+    } else {
+      startBreak(type, durationMinutes);
     }
+  }
 
-    _isOnBreak = box.get('timerIsOnBreak', defaultValue: false);
-    final breakStartMillis = box.get('timerBreakStartTime');
-    if (breakStartMillis != null) {
-      _breakStartTime = DateTime.fromMillisecondsSinceEpoch(breakStartMillis);
+  void startBreak(BreakType type, double durationMinutes) {
+    _activeBreakType = type;
+    _breakStartTime = DateTime.now();
+    _totalPaidBreakMinutes = durationMinutes;
+    _persistState();
+    notifyListeners();
+  }
+
+  void endBreak() {
+    if (_activeBreakType == BreakType.unpaid && _breakStartTime != null) {
+      final diff = DateTime.now().difference(_breakStartTime!).inSeconds / 60.0;
+      _accumulatedUnpaidMinutes += diff;
     }
+    _activeBreakType = null;
+    _breakStartTime = null;
+    _persistState();
+    notifyListeners();
+  }
 
-    final bTypeIdx = box.get('timerActiveBreakType');
-    if (bTypeIdx != null) _activeBreakType = BreakType.values[bTypeIdx];
-
-    _activeBreakDurationMinutes = box.get(
-      'timerActiveBreakDuration',
-      defaultValue: 0.0,
-    );
-    _totalDeductedSeconds = box.get(
-      'timerTotalDeductedSeconds',
-      defaultValue: 0.0,
-    );
-    _jobTypeId = box.get('timerJobTypeId');
-    _tips = box.get('timerTips', defaultValue: 0.0);
-
-    if (_isRunning) _startTicker();
+  void setJobType(String id) {
+    _jobTypeId = id;
+    _persistState();
     notifyListeners();
   }
 
   void _startTicker() {
     _ticker?.cancel();
-    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
+    _ticker = Timer.periodic(const Duration(seconds: 1), (timer) {
+      _updateElapsed();
+      _updateNotification();
       notifyListeners();
     });
   }
 
-  void setJobType(String id) {
-    _jobTypeId = id;
-    _persistence.settingsBox.put('timerJobTypeId', id);
-    notifyListeners();
-  }
+  void _updateElapsed() {
+    if (_startTime == null) return;
+    final now = _isRunning
+        ? DateTime.now()
+        : (_reviewEndTime ?? DateTime.now());
+    _elapsed = now.difference(_startTime!);
 
-  void setTips(double val) {
-    _tips = val;
-    _persistence.settingsBox.put('timerTips', val);
-    notifyListeners();
-  }
-
-  Future<void> startShift(String jobTypeId) async {
-    _startTime = DateTime.now();
-    _reviewEndTime = null;
-    _isRunning = true;
-    _jobTypeId = jobTypeId;
-    _totalDeductedSeconds = 0.0;
-    _tips = 0.0;
-    _isOnBreak = false;
-    _activeBreakType = null;
-
-    final box = _persistence.settingsBox;
-    await box.put('timerStartTime', _startTime!.millisecondsSinceEpoch);
-    await box.put('timerIsRunning', true);
-    await box.delete('timerReviewEndTime');
-    await box.put('timerJobTypeId', _jobTypeId);
-    await box.put('timerTotalDeductedSeconds', 0.0);
-    await box.put('timerTips', 0.0);
-    await box.put('timerIsOnBreak', false);
-    await box.delete('timerBreakStartTime');
-    await box.delete('timerActiveBreakType');
-
-    _updateNotification();
-    _startTicker();
-    notifyListeners();
-  }
-
-  Future<void> stopShift() async {
-    if (_isOnBreak) {
-      await endBreak();
-    }
-    _isRunning = false;
-    _reviewEndTime = DateTime.now();
-    _ticker?.cancel();
-
-    final box = _persistence.settingsBox;
-    await box.put('timerIsRunning', false);
-    await box.put('timerReviewEndTime', _reviewEndTime!.millisecondsSinceEpoch);
-
-    NotificationService.cancelNotification(100);
-    notifyListeners();
-  }
-
-  Future<void> resumeShift() async {
-    if (_startTime != null && _reviewEndTime != null) {
-      // Add the time spent in review mode to deductions
-      final pauseSeconds = DateTime.now().difference(_reviewEndTime!).inSeconds;
-      _totalDeductedSeconds += pauseSeconds;
-    }
-
-    _isRunning = true;
-    _reviewEndTime = null;
-
-    final box = _persistence.settingsBox;
-    await box.put('timerIsRunning', true);
-    await box.delete('timerReviewEndTime');
-    await box.put('timerTotalDeductedSeconds', _totalDeductedSeconds);
-
-    _updateNotification();
-    _startTicker();
-    notifyListeners();
-  }
-
-  Future<void> toggleBreak(BreakType type, double duration) async {
-    if (!_isRunning && _reviewEndTime == null) return;
-
-    if (_isOnBreak && _activeBreakType == type) {
-      await endBreak();
-    } else {
-      // If switching from another break, finalize previous if it was unpaid
-      if (_isOnBreak && _activeBreakType == BreakType.unpaid) {
-        _totalDeductedSeconds += DateTime.now()
-            .difference(_breakStartTime!)
-            .inSeconds;
-      }
-
-      _isOnBreak = true;
-      _activeBreakType = type;
-      _activeBreakDurationMinutes = duration;
-      _breakStartTime = DateTime.now();
-
-      final box = _persistence.settingsBox;
-      await box.put('timerIsOnBreak', true);
-      await box.put('timerActiveBreakType', type.index);
-      await box.put('timerActiveBreakDuration', duration);
-      await box.put(
-        'timerBreakStartTime',
-        _breakStartTime!.millisecondsSinceEpoch,
+    if (_activeBreakType != null && _breakStartTime != null) {
+      final breakElapsed = DateTime.now().difference(_breakStartTime!);
+      final totalBreak = Duration(
+        seconds: (_totalPaidBreakMinutes * 60).round(),
       );
-      await box.put('timerTotalDeductedSeconds', _totalDeductedSeconds);
+      _breakRemaining = totalBreak - breakElapsed;
+      if (_breakRemaining.isNegative) _breakRemaining = Duration.zero;
+    }
+  }
+
+  double get netMinutes {
+    if (_startTime == null) return 0;
+    final now = _isRunning
+        ? DateTime.now()
+        : (_reviewEndTime ?? DateTime.now());
+    double total = now.difference(_startTime!).inSeconds / 60.0;
+
+    double unpaidNow = 0;
+    if (_activeBreakType == BreakType.unpaid && _breakStartTime != null) {
+      unpaidNow = DateTime.now().difference(_breakStartTime!).inSeconds / 60.0;
     }
 
-    if (_isRunning) _updateNotification();
+    return total - _accumulatedUnpaidMinutes - unpaidNow;
+  }
+
+  double calculateLivePay(double hourlyRate) {
+    return (netMinutes / 60.0) * hourlyRate;
+  }
+
+  double _lastTips = 0;
+
+  double get tips => _lastTips;
+
+  set tips(double val) {
+    _lastTips = val;
     notifyListeners();
   }
 
-  Future<void> endBreak() async {
-    if (!_isOnBreak) return;
+  Map<String, String>? _lastL10n;
 
-    if (_activeBreakType == BreakType.unpaid && _breakStartTime != null) {
-      _totalDeductedSeconds += DateTime.now()
-          .difference(_breakStartTime!)
-          .inSeconds;
-    }
-
-    _isOnBreak = false;
-    _activeBreakType = null;
-    _breakStartTime = null;
-
-    final box = _persistence.settingsBox;
-    await box.put('timerIsOnBreak', false);
-    await box.delete('timerActiveBreakType');
-    await box.delete('timerBreakStartTime');
-    await box.put('timerTotalDeductedSeconds', _totalDeductedSeconds);
-
-    notifyListeners();
+  void updateL10n(Map<String, String> l10n) {
+    _lastL10n = l10n;
   }
 
   void _updateNotification() {
-    if (!_isRunning || _startTime == null) return;
+    if (!_isRunning || _startTime == null || _lastL10n == null) return;
+
+    final String title = _activeBreakType != null
+        ? (_activeBreakType == BreakType.paid
+              ? _lastL10n!['titlePaid']!
+              : _lastL10n!['titleUnpaid']!)
+        : _lastL10n!['titleActive']!;
+
+    final String body = _activeBreakType != null
+        ? _lastL10n!['bodyCountdown']!.replaceAll(
+            '[[time]]',
+            '${_breakRemaining.inMinutes}:${(_breakRemaining.inSeconds % 60).toString().padLeft(2, '0')}',
+          )
+        : _lastL10n!['bodyRunning']!;
+
     NotificationService.showTimerNotification(
-      id: 100,
-      title: _isOnBreak
-          ? (_activeBreakType == BreakType.paid
-                ? 'הפסקה בתשלום'
-                : 'הפסקה ללא תשלום')
-          : 'משמרת פעילה',
-      body: _isOnBreak
-          ? 'ספירה לאחור: ${breakRemaining.inMinutes}:${(breakRemaining.inSeconds % 60).toString().padLeft(2, '0')}'
-          : 'הטיימר רץ...',
+      id: timerNotificationId,
+      title: title,
+      body: body,
       startTime: _startTime!,
-      isOnBreak: _isOnBreak,
+      channelName: _lastL10n!['channelName']!,
+      channelDescription: _lastL10n!['channelDesc']!,
+      stopActionLabel: _lastL10n!['stop']!,
+      resumeActionLabel: _lastL10n!['resume']!,
+      paidBreakActionLabel: _lastL10n!['paidBreak']!,
+      unpaidBreakActionLabel: _lastL10n!['unpaidBreak']!,
+      isOnBreak: isOnBreak,
     );
-  }
-
-  Future<void> resetTimer() async {
-    _ticker?.cancel();
-    _startTime = null;
-    _reviewEndTime = null;
-    _isRunning = false;
-    _isOnBreak = false;
-    _breakStartTime = null;
-    _activeBreakType = null;
-    _totalDeductedSeconds = 0.0;
-    _tips = 0.0;
-
-    final box = _persistence.settingsBox;
-    await box.delete('timerStartTime');
-    await box.delete('timerIsRunning');
-    await box.delete('timerReviewEndTime');
-    await box.delete('timerIsOnBreak');
-    await box.delete('timerActiveBreakType');
-    await box.delete('timerBreakStartTime');
-    await box.delete('timerActiveBreakDuration');
-    await box.delete('timerAccumulatedUnpaidMinutes');
-    await box.delete('timerTips');
-
-    NotificationService.cancelNotification(100);
-    notifyListeners();
-  }
-
-  @override
-  void dispose() {
-    _ticker?.cancel();
-    super.dispose();
   }
 }
