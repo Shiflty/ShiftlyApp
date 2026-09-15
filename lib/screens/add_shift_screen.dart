@@ -208,7 +208,11 @@ class _AddShiftScreenState extends State<AddShiftScreen>
         return null;
       }
       if (amount == null || amount < 0) {
-        UIUtils.showSnackBar(context, l.common_error, isError: true);
+        UIUtils.showSnackBar(
+          context,
+          l.onboarding_auto_expenses_invalid_amount,
+          isError: true,
+        );
         return null;
       }
       if (amount > 0) {
@@ -229,8 +233,8 @@ class _AddShiftScreenState extends State<AddShiftScreen>
 
     final confirmed = await UIUtils.showConfirmDialog(
       context: context,
-      title: l.common_confirm,
-      content: l.common_confirm,
+      title: l.add_shift_shift_ended_dialog_title,
+      content: l.add_shift_shift_ended_dialog_desc,
     );
     if (confirmed != true) return;
     if (!mounted) return;
@@ -274,7 +278,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
     timerProvider.resetTimer();
 
     if (!mounted) return;
-    UIUtils.showSnackBar(context, l.common_success);
+    UIUtils.showSnackBar(context, l.add_shift_shift_saved);
     Navigator.pop(context);
   }
 
@@ -303,8 +307,10 @@ class _AddShiftScreenState extends State<AddShiftScreen>
 
     final confirmed = await UIUtils.showConfirmDialog(
       context: context,
-      title: widget.shiftToEdit != null ? l.common_save : l.common_confirm,
-      content: l.common_confirm,
+      title: widget.shiftToEdit != null
+          ? l.add_shift_shift_edit_dialog_title
+          : l.add_shift_shift_ended_dialog_title,
+      content: l.add_shift_shift_ended_edit_dialog_desc,
     );
     if (confirmed != true) return;
     if (!mounted) return;
@@ -342,7 +348,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
         },
       );
 
-      UIUtils.showSnackBar(context, l.common_success);
+      UIUtils.showSnackBar(context, l.add_shift_shift_saved);
     } else {
       final shift = Shift(
         id: const Uuid().v4(),
@@ -370,7 +376,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
         },
       );
 
-      UIUtils.showSnackBar(context, l.common_success);
+      UIUtils.showSnackBar(context, l.add_shift_shift_saved);
     }
     if (mounted) Navigator.pop(context);
   }
@@ -386,8 +392,8 @@ class _AddShiftScreenState extends State<AddShiftScreen>
 
     final confirmed = await UIUtils.showConfirmDialog(
       context: context,
-      title: l.common_confirm,
-      content: '${l.common_confirm} ${validLines.length}?',
+      title: l.add_shift_paste_parse_dialog_title,
+      content: '${l.add_shift_paste_parse_dialog_desc} (${validLines.length})',
     );
     if (confirmed != true) return;
     if (!mounted) return;
@@ -430,7 +436,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
     if (addedCount > 0) {
       Navigator.pop(context);
     } else {
-      UIUtils.showSnackBar(context, l.common_error, isError: true);
+      UIUtils.showSnackBar(context, l.add_shift_paste_error, isError: true);
     }
   }
 
@@ -531,7 +537,11 @@ class _AddShiftScreenState extends State<AddShiftScreen>
                 _tabController.animateTo(0);
               } else if (!isRunning) {
                 if (_selectedJobTypeId == null) {
-                  UIUtils.showSnackBar(context, l.common_error, isError: true);
+                  UIUtils.showSnackBar(
+                    context,
+                    l.add_shift_pick_a_job,
+                    isError: true,
+                  );
                   return;
                 }
                 timerProvider.startShift(_selectedJobTypeId!);
@@ -602,7 +612,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
                       const SizedBox(height: AppTheme.spaceXs),
                       Text(
                         isReviewMode
-                            ? l.common_continue
+                            ? l.add_shift_timer_continue_work
                             : (isRunning
                                   ? (isOnBreak
                                         ? l.add_shift_timer_resume_work
@@ -784,7 +794,9 @@ class _AddShiftScreenState extends State<AddShiftScreen>
                   isReviewMode ? Icons.check_rounded : Icons.stop_rounded,
                 ),
                 label: Text(
-                  isReviewMode ? l.common_save : l.add_shift_timer_stop_shift,
+                  isReviewMode
+                      ? l.common_save_and_finish
+                      : l.add_shift_timer_stop_shift,
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: isReviewMode
@@ -799,17 +811,17 @@ class _AddShiftScreenState extends State<AddShiftScreen>
               onPressed: () async {
                 final confirmed = await UIUtils.showConfirmDialog(
                   context: context,
-                  title: l.common_confirm,
-                  content: l.common_confirm,
+                  title: l.add_shift_timer_reset_title,
+                  content: l.add_shift_timer_reset_desc,
                   isDestructive: true,
-                  confirmLabel: l.common_back,
+                  confirmLabel: l.common_reset,
                 );
                 if (confirmed != true) return;
                 if (!mounted) return;
                 timerProvider.resetTimer();
               },
               child: Text(
-                l.common_back,
+                l.common_reset_and_cancel,
                 style: TextStyle(
                   color: Theme.of(
                     context,
@@ -845,7 +857,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
               Navigator.pop(ctx);
               _finishTimerShift();
             },
-            child: Text(l.common_save),
+            child: Text(l.common_save_and_finish),
           ),
         ],
       ),
@@ -996,7 +1008,9 @@ class _AddShiftScreenState extends State<AddShiftScreen>
               onPressed: _saveManual,
               icon: const Icon(Icons.check_circle_rounded),
               label: Text(
-                widget.shiftToEdit != null ? l.common_save : l.add_shift_title,
+                widget.shiftToEdit != null
+                    ? l.add_shift_shift_edit_dialog_title
+                    : l.add_shift_shift_ended_dialog_title,
               ),
             ),
           ),
@@ -1181,7 +1195,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
                   ),
                   if (controllers.length > 1)
                     IconButton(
-                      tooltip: l.common_cancel,
+                      tooltip: l.common_delete,
                       icon: const Icon(
                         Icons.remove_circle_outline_rounded,
                         color: AppTheme.expense,

@@ -285,8 +285,8 @@ class _CalendarShiftTile extends StatelessWidget {
         final dateStr = DateFormat('dd/MM/yyyy').format(shift.date);
         return await UIUtils.showConfirmDialog(
           context: context,
-          title: l.common_delete,
-          content: '${l.common_delete} $dateStr?',
+          title: l.common_delete_shit_short,
+          content: '${l.common_delete_shit_expanded} $dateStr?',
           isDestructive: true,
           confirmLabel: l.common_delete,
         );
@@ -297,9 +297,9 @@ class _CalendarShiftTile extends StatelessWidget {
 
         UIUtils.showSnackBar(
           context,
-          '$dateStr ${l.common_delete}',
+          '$dateStr ${l.common_delete_shift_after}',
           action: SnackBarAction(
-            label: l.common_back,
+            label: l.common_cancel,
             onPressed: () {
               shiftProvider.addShift(
                 shift,

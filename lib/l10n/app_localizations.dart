@@ -158,6 +158,18 @@ abstract class AppLocalizations {
   /// **'הצלחה'**
   String get common_success;
 
+  /// No description provided for @common_add.
+  ///
+  /// In he, this message translates to:
+  /// **'הוסף'**
+  String get common_add;
+
+  /// No description provided for @common_edit.
+  ///
+  /// In he, this message translates to:
+  /// **'עריכה'**
+  String get common_edit;
+
   /// No description provided for @common_calendar_title.
   ///
   /// In he, this message translates to:
@@ -193,6 +205,48 @@ abstract class AppLocalizations {
   /// In he, this message translates to:
   /// **'משמרות'**
   String get common_shifts_count;
+
+  /// No description provided for @common_delete_shit_short.
+  ///
+  /// In he, this message translates to:
+  /// **'מחיקת משמרת'**
+  String get common_delete_shit_short;
+
+  /// No description provided for @common_delete_shit_expanded.
+  ///
+  /// In he, this message translates to:
+  /// **'האם אתה בטוח שברצונך למחוק את המשמרת מיום '**
+  String get common_delete_shit_expanded;
+
+  /// No description provided for @common_delete_shift_after.
+  ///
+  /// In he, this message translates to:
+  /// **'המשמרת נמחקה בהצלחה'**
+  String get common_delete_shift_after;
+
+  /// No description provided for @common_save_and_finish.
+  ///
+  /// In he, this message translates to:
+  /// **'שמור וסיים'**
+  String get common_save_and_finish;
+
+  /// No description provided for @common_reset.
+  ///
+  /// In he, this message translates to:
+  /// **'אפס'**
+  String get common_reset;
+
+  /// No description provided for @common_reset_and_cancel.
+  ///
+  /// In he, this message translates to:
+  /// **'ביטול ואיפוס'**
+  String get common_reset_and_cancel;
+
+  /// No description provided for @common_undo.
+  ///
+  /// In he, this message translates to:
+  /// **'ביטול'**
+  String get common_undo;
 
   /// No description provided for @onboarding_welcome_title.
   ///
@@ -353,14 +407,38 @@ abstract class AppLocalizations {
   /// No description provided for @onboarding_job_types_add_button.
   ///
   /// In he, this message translates to:
-  /// **'הוסף סוג משמרת'**
+  /// **'הוספת סוג עבודה'**
   String get onboarding_job_types_add_button;
+
+  /// No description provided for @onboarding_job_types_edit_button.
+  ///
+  /// In he, this message translates to:
+  /// **'עריכת סוג עבודה'**
+  String get onboarding_job_types_edit_button;
+
+  /// No description provided for @onboarding_job_types_delete_title.
+  ///
+  /// In he, this message translates to:
+  /// **'מחיקת תפקיד'**
+  String get onboarding_job_types_delete_title;
+
+  /// No description provided for @onboarding_job_types_delete_desc.
+  ///
+  /// In he, this message translates to:
+  /// **'האם למחוק את התפקיד '**
+  String get onboarding_job_types_delete_desc;
 
   /// No description provided for @onboarding_job_types_rate_suffix.
   ///
   /// In he, this message translates to:
   /// **'לשעה'**
   String get onboarding_job_types_rate_suffix;
+
+  /// No description provided for @onboarding_job_types_same.
+  ///
+  /// In he, this message translates to:
+  /// **'תפקיד בשם זה כבר קיים'**
+  String get onboarding_job_types_same;
 
   /// No description provided for @default_job_buffet.
   ///
@@ -379,6 +457,12 @@ abstract class AppLocalizations {
   /// In he, this message translates to:
   /// **'פריקה'**
   String get default_job_unloading;
+
+  /// No description provided for @default_expenses_trips.
+  ///
+  /// In he, this message translates to:
+  /// **'נסיעות'**
+  String get default_expenses_trips;
 
   /// No description provided for @settings_title.
   ///
@@ -539,7 +623,7 @@ abstract class AppLocalizations {
   /// No description provided for @settings_dialog_error_enter_desc.
   ///
   /// In he, this message translates to:
-  /// **'נא להזין תיאור'**
+  /// **'נא להזין תיאור לכל הוצאה קבועה'**
   String get settings_dialog_error_enter_desc;
 
   /// No description provided for @settings_theme_system.
@@ -583,6 +667,102 @@ abstract class AppLocalizations {
   /// In he, this message translates to:
   /// **'היסטוריית שכר'**
   String get settings_wage_history_title;
+
+  /// No description provided for @settings_job_name_label.
+  ///
+  /// In he, this message translates to:
+  /// **'שם התפקיד'**
+  String get settings_job_name_label;
+
+  /// No description provided for @settings_job_rate_label.
+  ///
+  /// In he, this message translates to:
+  /// **'תעריף שעתי (חדש)'**
+  String get settings_job_rate_label;
+
+  /// No description provided for @settings_job_start_date_label.
+  ///
+  /// In he, this message translates to:
+  /// **'תאריך תחילה'**
+  String get settings_job_start_date_label;
+
+  /// No description provided for @settings_job_error_name_empty.
+  ///
+  /// In he, this message translates to:
+  /// **'נא להזין שם לתפקיד'**
+  String get settings_job_error_name_empty;
+
+  /// No description provided for @settings_job_error_exists.
+  ///
+  /// In he, this message translates to:
+  /// **'תפקיד בשם זה כבר קיים'**
+  String get settings_job_error_exists;
+
+  /// No description provided for @settings_job_error_negative_rate.
+  ///
+  /// In he, this message translates to:
+  /// **'השכר לא יכול להיות שלילי'**
+  String get settings_job_error_negative_rate;
+
+  /// No description provided for @settings_job_add_confirm_title.
+  ///
+  /// In he, this message translates to:
+  /// **'הוספת תפקיד'**
+  String get settings_job_add_confirm_title;
+
+  /// No description provided for @settings_job_edit_confirm_title.
+  ///
+  /// In he, this message translates to:
+  /// **'עדכון תפקיד'**
+  String get settings_job_edit_confirm_title;
+
+  /// No description provided for @settings_job_save_confirm_content.
+  ///
+  /// In he, this message translates to:
+  /// **'האם לשמור את התפקיד \"[[name]]\" עם שכר של [[rate]] החל מיום [[date]]?'**
+  String get settings_job_save_confirm_content;
+
+  /// No description provided for @settings_job_delete_confirm_title.
+  ///
+  /// In he, this message translates to:
+  /// **'מחיקת תפקיד'**
+  String get settings_job_delete_confirm_title;
+
+  /// No description provided for @settings_job_delete_confirm_content.
+  ///
+  /// In he, this message translates to:
+  /// **'האם אתה בטוח שברצונך למחוק את התפקיד \"[[name]]\"?'**
+  String get settings_job_delete_confirm_content;
+
+  /// No description provided for @settings_job_deleted_msg.
+  ///
+  /// In he, this message translates to:
+  /// **'תפקיד \"[[name]]\" נמחק'**
+  String get settings_job_deleted_msg;
+
+  /// No description provided for @settings_dialog_update_breaks_content.
+  ///
+  /// In he, this message translates to:
+  /// **'האם לעדכן את זמני ברירת המחדל ל-[[paid]] דק\' בתשלום ו-[[unpaid]] דק\' ללא תשלום?'**
+  String get settings_dialog_update_breaks_content;
+
+  /// No description provided for @settings_breaks_updated_msg.
+  ///
+  /// In he, this message translates to:
+  /// **'זמני ההפסקות עודכנו'**
+  String get settings_breaks_updated_msg;
+
+  /// No description provided for @settings_jobs_empty.
+  ///
+  /// In he, this message translates to:
+  /// **'לא נמצאו תפקידים.'**
+  String get settings_jobs_empty;
+
+  /// No description provided for @settings_reset_success_msg.
+  ///
+  /// In he, this message translates to:
+  /// **'האפליקציה אותחלה בהצלחה'**
+  String get settings_reset_success_msg;
 
   /// No description provided for @home_empty_state_title.
   ///
@@ -677,7 +857,7 @@ abstract class AppLocalizations {
   /// No description provided for @home_action_calendar.
   ///
   /// In he, this message translates to:
-  /// **'לוח שנה'**
+  /// **'לוח משמרות'**
   String get home_action_calendar;
 
   /// No description provided for @expenses_title.
@@ -746,6 +926,12 @@ abstract class AppLocalizations {
   /// **'מחיקת הוצאה'**
   String get expenses_dialog_delete_title;
 
+  /// No description provided for @expenses_no_history.
+  ///
+  /// In he, this message translates to:
+  /// **'אין הוצאות רשומות'**
+  String get expenses_no_history;
+
   /// No description provided for @expenses_save_expense_confirm_content.
   ///
   /// In he, this message translates to:
@@ -755,7 +941,7 @@ abstract class AppLocalizations {
   /// No description provided for @expenses_delete_expense_confirm_content.
   ///
   /// In he, this message translates to:
-  /// **'האם למחוק את \"[[desc]]\" בסך [[amount]]?'**
+  /// **'האם למחוק את ההוצאה \"[[desc]]\" בסך [[amount]]?'**
   String get expenses_delete_expense_confirm_content;
 
   /// No description provided for @expenses_total_label.
@@ -815,7 +1001,7 @@ abstract class AppLocalizations {
   /// No description provided for @add_shift_timer_countdown.
   ///
   /// In he, this message translates to:
-  /// **'ספירה לאחור:'**
+  /// **'ספירה לאחור: '**
   String get add_shift_timer_countdown;
 
   /// No description provided for @add_shift_timer_break_paid.
@@ -865,6 +1051,24 @@ abstract class AppLocalizations {
   /// In he, this message translates to:
   /// **'הטיימר נעצר. האם ברצונך לשמור את המשמרת או להמשיך בעבודה?'**
   String get add_shift_timer_stopped_msg;
+
+  /// No description provided for @add_shift_timer_reset_title.
+  ///
+  /// In he, this message translates to:
+  /// **'איפוס טיימר'**
+  String get add_shift_timer_reset_title;
+
+  /// No description provided for @add_shift_timer_reset_desc.
+  ///
+  /// In he, this message translates to:
+  /// **'האם אתה בטוח שברצונך לאפס את הטיימר? כל המידע הנוכחי יימחק.'**
+  String get add_shift_timer_reset_desc;
+
+  /// No description provided for @add_shift_timer_resume_shift.
+  ///
+  /// In he, this message translates to:
+  /// **'המשך משמרת'**
+  String get add_shift_timer_resume_shift;
 
   /// No description provided for @add_shift_manual_time_section.
   ///
@@ -956,6 +1160,24 @@ abstract class AppLocalizations {
   /// **'פענח ושמור הכל'**
   String get add_shift_paste_parse_button;
 
+  /// No description provided for @add_shift_paste_parse_dialog_title.
+  ///
+  /// In he, this message translates to:
+  /// **'פענוח משמרות'**
+  String get add_shift_paste_parse_dialog_title;
+
+  /// No description provided for @add_shift_paste_parse_dialog_desc.
+  ///
+  /// In he, this message translates to:
+  /// **'האם לפענח ולשמור משמרות מהטקסט שהודבק?'**
+  String get add_shift_paste_parse_dialog_desc;
+
+  /// No description provided for @add_shift_paste_error.
+  ///
+  /// In he, this message translates to:
+  /// **'בדוק שוב שהפורמט שהזנת תקין'**
+  String get add_shift_paste_error;
+
   /// No description provided for @add_shift_tips_title.
   ///
   /// In he, this message translates to:
@@ -997,6 +1219,60 @@ abstract class AppLocalizations {
   /// In he, this message translates to:
   /// **'הוסף הוצאה'**
   String get add_shift_expenses_add_button;
+
+  /// No description provided for @add_shift_shift_ended_dialog_title.
+  ///
+  /// In he, this message translates to:
+  /// **'שמירת משמרת'**
+  String get add_shift_shift_ended_dialog_title;
+
+  /// No description provided for @add_shift_shift_ended_dialog_desc.
+  ///
+  /// In he, this message translates to:
+  /// **'האם אתה בטוח שברצונך לשמור את פרטי המשמרת?'**
+  String get add_shift_shift_ended_dialog_desc;
+
+  /// No description provided for @add_shift_shift_ended_edit_dialog_desc.
+  ///
+  /// In he, this message translates to:
+  /// **'האם אתה בטוח שברצונך לשמור את פרטי המשמרת?'**
+  String get add_shift_shift_ended_edit_dialog_desc;
+
+  /// No description provided for @add_shift_shift_edit_dialog_title.
+  ///
+  /// In he, this message translates to:
+  /// **'עדכון משמרת'**
+  String get add_shift_shift_edit_dialog_title;
+
+  /// No description provided for @add_shift_shift_saved.
+  ///
+  /// In he, this message translates to:
+  /// **'המשמרת נשמרה בהצלחה'**
+  String get add_shift_shift_saved;
+
+  /// No description provided for @add_shift_pick_a_job.
+  ///
+  /// In he, this message translates to:
+  /// **'בחר סוג עבודה קודם'**
+  String get add_shift_pick_a_job;
+
+  /// No description provided for @add_shift_delete_title.
+  ///
+  /// In he, this message translates to:
+  /// **'מחיקת משמרת'**
+  String get add_shift_delete_title;
+
+  /// No description provided for @add_shift_delete_desc.
+  ///
+  /// In he, this message translates to:
+  /// **'האם אתה בטוח שברצונך למחוק את המשמרת מיום '**
+  String get add_shift_delete_desc;
+
+  /// No description provided for @add_shift_delete_msg.
+  ///
+  /// In he, this message translates to:
+  /// **'המשמרת נמחקה בהצלחה: '**
+  String get add_shift_delete_msg;
 
   /// No description provided for @notification_reminder_title.
   ///

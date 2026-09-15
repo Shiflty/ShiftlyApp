@@ -33,7 +33,9 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     }
     if (_autoAmountControllers.isEmpty) {
       _autoAmountControllers.add(TextEditingController(text: '0'));
-      _autoDescControllers.add(TextEditingController(text: ''));
+      _autoDescControllers.add(
+        TextEditingController(text: ''), // Hint will show 'Trips'
+      );
     }
   }
 
@@ -309,7 +311,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                 Center(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 40),
-                    child: Text(l.home_shift_list_no_shifts),
+                    child: Text(l.expenses_no_history),
                   ),
                 )
               else
@@ -353,6 +355,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
               controller: _autoDescControllers[index],
               decoration: InputDecoration(
                 labelText: l.onboarding_auto_expenses_desc_label,
+                hintText: l.default_expenses_trips,
               ),
             ),
           ),

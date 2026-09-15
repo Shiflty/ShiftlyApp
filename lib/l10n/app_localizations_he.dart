@@ -39,6 +39,12 @@ class AppLocalizationsHe extends AppLocalizations {
   String get common_success => 'הצלחה';
 
   @override
+  String get common_add => 'הוסף';
+
+  @override
+  String get common_edit => 'עריכה';
+
+  @override
   String get common_calendar_title => 'לוח משמרות';
 
   @override
@@ -55,6 +61,28 @@ class AppLocalizationsHe extends AppLocalizations {
 
   @override
   String get common_shifts_count => 'משמרות';
+
+  @override
+  String get common_delete_shit_short => 'מחיקת משמרת';
+
+  @override
+  String get common_delete_shit_expanded =>
+      'האם אתה בטוח שברצונך למחוק את המשמרת מיום ';
+
+  @override
+  String get common_delete_shift_after => 'המשמרת נמחקה בהצלחה';
+
+  @override
+  String get common_save_and_finish => 'שמור וסיים';
+
+  @override
+  String get common_reset => 'אפס';
+
+  @override
+  String get common_reset_and_cancel => 'ביטול ואיפוס';
+
+  @override
+  String get common_undo => 'ביטול';
 
   @override
   String get onboarding_welcome_title => 'ברוכים הבאים ל-Shiftly';
@@ -142,10 +170,22 @@ class AppLocalizationsHe extends AppLocalizations {
       'הגדר את התפקידים השונים שלך ואת השכר לשעה.';
 
   @override
-  String get onboarding_job_types_add_button => 'הוסף סוג משמרת';
+  String get onboarding_job_types_add_button => 'הוספת סוג עבודה';
+
+  @override
+  String get onboarding_job_types_edit_button => 'עריכת סוג עבודה';
+
+  @override
+  String get onboarding_job_types_delete_title => 'מחיקת תפקיד';
+
+  @override
+  String get onboarding_job_types_delete_desc => 'האם למחוק את התפקיד ';
 
   @override
   String get onboarding_job_types_rate_suffix => 'לשעה';
+
+  @override
+  String get onboarding_job_types_same => 'תפקיד בשם זה כבר קיים';
 
   @override
   String get default_job_buffet => 'מזנון';
@@ -155,6 +195,9 @@ class AppLocalizationsHe extends AppLocalizations {
 
   @override
   String get default_job_unloading => 'פריקה';
+
+  @override
+  String get default_expenses_trips => 'נסיעות';
 
   @override
   String get settings_title => 'הגדרות';
@@ -240,7 +283,8 @@ class AppLocalizationsHe extends AppLocalizations {
   String get settings_dialog_final_confirm_button => 'מחק הכל לצמיתות';
 
   @override
-  String get settings_dialog_error_enter_desc => 'נא להזין תיאור';
+  String get settings_dialog_error_enter_desc =>
+      'נא להזין תיאור לכל הוצאה קבועה';
 
   @override
   String get settings_theme_system => 'מערכת';
@@ -262,6 +306,57 @@ class AppLocalizationsHe extends AppLocalizations {
 
   @override
   String get settings_wage_history_title => 'היסטוריית שכר';
+
+  @override
+  String get settings_job_name_label => 'שם התפקיד';
+
+  @override
+  String get settings_job_rate_label => 'תעריף שעתי (חדש)';
+
+  @override
+  String get settings_job_start_date_label => 'תאריך תחילה';
+
+  @override
+  String get settings_job_error_name_empty => 'נא להזין שם לתפקיד';
+
+  @override
+  String get settings_job_error_exists => 'תפקיד בשם זה כבר קיים';
+
+  @override
+  String get settings_job_error_negative_rate => 'השכר לא יכול להיות שלילי';
+
+  @override
+  String get settings_job_add_confirm_title => 'הוספת תפקיד';
+
+  @override
+  String get settings_job_edit_confirm_title => 'עדכון תפקיד';
+
+  @override
+  String get settings_job_save_confirm_content =>
+      'האם לשמור את התפקיד \"[[name]]\" עם שכר של [[rate]] החל מיום [[date]]?';
+
+  @override
+  String get settings_job_delete_confirm_title => 'מחיקת תפקיד';
+
+  @override
+  String get settings_job_delete_confirm_content =>
+      'האם אתה בטוח שברצונך למחוק את התפקיד \"[[name]]\"?';
+
+  @override
+  String get settings_job_deleted_msg => 'תפקיד \"[[name]]\" נמחק';
+
+  @override
+  String get settings_dialog_update_breaks_content =>
+      'האם לעדכן את זמני ברירת המחדל ל-[[paid]] דק\' בתשלום ו-[[unpaid]] דק\' ללא תשלום?';
+
+  @override
+  String get settings_breaks_updated_msg => 'זמני ההפסקות עודכנו';
+
+  @override
+  String get settings_jobs_empty => 'לא נמצאו תפקידים.';
+
+  @override
+  String get settings_reset_success_msg => 'האפליקציה אותחלה בהצלחה';
 
   @override
   String get home_empty_state_title => 'עדיין לא נרשמו משמרות';
@@ -309,7 +404,7 @@ class AppLocalizationsHe extends AppLocalizations {
   String get home_action_new_shift => 'משמרת חדשה';
 
   @override
-  String get home_action_calendar => 'לוח שנה';
+  String get home_action_calendar => 'לוח משמרות';
 
   @override
   String get expenses_title => 'ניהול הוצאות';
@@ -346,12 +441,15 @@ class AppLocalizationsHe extends AppLocalizations {
   String get expenses_dialog_delete_title => 'מחיקת הוצאה';
 
   @override
+  String get expenses_no_history => 'אין הוצאות רשומות';
+
+  @override
   String get expenses_save_expense_confirm_content =>
       'האם לשמור את ההוצאה \"[[desc]]\" בסך [[amount]]?';
 
   @override
   String get expenses_delete_expense_confirm_content =>
-      'האם למחוק את \"[[desc]]\" בסך [[amount]]?';
+      'האם למחוק את ההוצאה \"[[desc]]\" בסך [[amount]]?';
 
   @override
   String get expenses_total_label => 'סה\"כ';
@@ -381,7 +479,7 @@ class AppLocalizationsHe extends AppLocalizations {
   String get add_shift_timer_accumulated_live => 'נצבר בשידור חי';
 
   @override
-  String get add_shift_timer_countdown => 'ספירה לאחור:';
+  String get add_shift_timer_countdown => 'ספירה לאחור: ';
 
   @override
   String get add_shift_timer_break_paid => 'בהפסקה בתשלום...';
@@ -407,6 +505,16 @@ class AppLocalizationsHe extends AppLocalizations {
   @override
   String get add_shift_timer_stopped_msg =>
       'הטיימר נעצר. האם ברצונך לשמור את המשמרת או להמשיך בעבודה?';
+
+  @override
+  String get add_shift_timer_reset_title => 'איפוס טיימר';
+
+  @override
+  String get add_shift_timer_reset_desc =>
+      'האם אתה בטוח שברצונך לאפס את הטיימר? כל המידע הנוכחי יימחק.';
+
+  @override
+  String get add_shift_timer_resume_shift => 'המשך משמרת';
 
   @override
   String get add_shift_manual_time_section => 'זמן';
@@ -456,6 +564,16 @@ class AppLocalizationsHe extends AppLocalizations {
   String get add_shift_paste_parse_button => 'פענח ושמור הכל';
 
   @override
+  String get add_shift_paste_parse_dialog_title => 'פענוח משמרות';
+
+  @override
+  String get add_shift_paste_parse_dialog_desc =>
+      'האם לפענח ולשמור משמרות מהטקסט שהודבק?';
+
+  @override
+  String get add_shift_paste_error => 'בדוק שוב שהפורמט שהזנת תקין';
+
+  @override
   String get add_shift_tips_title => 'טיפים';
 
   @override
@@ -475,6 +593,36 @@ class AppLocalizationsHe extends AppLocalizations {
 
   @override
   String get add_shift_expenses_add_button => 'הוסף הוצאה';
+
+  @override
+  String get add_shift_shift_ended_dialog_title => 'שמירת משמרת';
+
+  @override
+  String get add_shift_shift_ended_dialog_desc =>
+      'האם אתה בטוח שברצונך לשמור את פרטי המשמרת?';
+
+  @override
+  String get add_shift_shift_ended_edit_dialog_desc =>
+      'האם אתה בטוח שברצונך לשמור את פרטי המשמרת?';
+
+  @override
+  String get add_shift_shift_edit_dialog_title => 'עדכון משמרת';
+
+  @override
+  String get add_shift_shift_saved => 'המשמרת נשמרה בהצלחה';
+
+  @override
+  String get add_shift_pick_a_job => 'בחר סוג עבודה קודם';
+
+  @override
+  String get add_shift_delete_title => 'מחיקת משמרת';
+
+  @override
+  String get add_shift_delete_desc =>
+      'האם אתה בטוח שברצונך למחוק את המשמרת מיום ';
+
+  @override
+  String get add_shift_delete_msg => 'המשמרת נמחקה בהצלחה: ';
 
   @override
   String get notification_reminder_title => 'תזכורת למשמרת';

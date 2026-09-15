@@ -38,6 +38,9 @@ class AppTheme {
   static const double radiusLg = 20;
   static const double radiusXl = 24;
 
+  // ── Global Font ───────────────────────────────────────────────────
+  static const String fontFamily = 'Arial';
+
   // ── Typography helpers ────────────────────────────────────────────
   static const TextStyle monoNumber = TextStyle(
     fontFamily: 'monospace',
@@ -78,12 +81,14 @@ class AppTheme {
         .apply(
           bodyColor: colorScheme.onSurface,
           displayColor: colorScheme.onSurface,
+          fontFamily: fontFamily,
         );
 
     return ThemeData(
       useMaterial3: true,
       brightness: brightness,
       colorScheme: colorScheme,
+      fontFamily: fontFamily,
       scaffoldBackgroundColor: colorScheme.surface,
       splashFactory: InkSparkle.splashFactory,
       visualDensity: VisualDensity.standard,

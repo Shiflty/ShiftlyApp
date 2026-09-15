@@ -39,6 +39,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get common_success => 'Success';
 
   @override
+  String get common_add => 'Add';
+
+  @override
+  String get common_edit => 'Edit';
+
+  @override
   String get common_calendar_title => 'Shift Calendar';
 
   @override
@@ -55,6 +61,28 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get common_shifts_count => 'Shifts';
+
+  @override
+  String get common_delete_shit_short => 'Delete Shift';
+
+  @override
+  String get common_delete_shit_expanded =>
+      'Are you sure you want to delete the shift from ';
+
+  @override
+  String get common_delete_shift_after => 'Shift deleted successfully';
+
+  @override
+  String get common_save_and_finish => 'Save & Finish';
+
+  @override
+  String get common_reset => 'Reset';
+
+  @override
+  String get common_reset_and_cancel => 'Cancel & Reset';
+
+  @override
+  String get common_undo => 'Undo';
 
   @override
   String get onboarding_welcome_title => 'Welcome to Shiftly';
@@ -146,7 +174,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onboarding_job_types_add_button => 'Add Shift Type';
 
   @override
+  String get onboarding_job_types_edit_button => 'Edit Shift Type';
+
+  @override
+  String get onboarding_job_types_delete_title => 'Delete Job';
+
+  @override
+  String get onboarding_job_types_delete_desc => 'Delete job ';
+
+  @override
   String get onboarding_job_types_rate_suffix => 'per hour';
+
+  @override
+  String get onboarding_job_types_same => 'Job with this name already exists';
 
   @override
   String get default_job_buffet => 'Buffet';
@@ -156,6 +196,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get default_job_unloading => 'Unloading';
+
+  @override
+  String get default_expenses_trips => 'Travel';
 
   @override
   String get settings_title => 'Settings';
@@ -242,7 +285,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settings_dialog_final_confirm_button => 'Permanently Delete All';
 
   @override
-  String get settings_dialog_error_enter_desc => 'Please enter a description';
+  String get settings_dialog_error_enter_desc =>
+      'Please enter a description for each expense';
 
   @override
   String get settings_theme_system => 'System';
@@ -264,6 +308,57 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settings_wage_history_title => 'Wage History';
+
+  @override
+  String get settings_job_name_label => 'Job Name';
+
+  @override
+  String get settings_job_rate_label => 'Hourly Rate (New)';
+
+  @override
+  String get settings_job_start_date_label => 'Start Date';
+
+  @override
+  String get settings_job_error_name_empty => 'Please enter a job name';
+
+  @override
+  String get settings_job_error_exists => 'Job with this name already exists';
+
+  @override
+  String get settings_job_error_negative_rate => 'Wage cannot be negative';
+
+  @override
+  String get settings_job_add_confirm_title => 'Add Job';
+
+  @override
+  String get settings_job_edit_confirm_title => 'Update Job';
+
+  @override
+  String get settings_job_save_confirm_content =>
+      'Save job \"[[name]]\" with rate [[rate]] starting [[date]]?';
+
+  @override
+  String get settings_job_delete_confirm_title => 'Delete Job';
+
+  @override
+  String get settings_job_delete_confirm_content =>
+      'Are you sure you want to delete job \"[[name]]\"?';
+
+  @override
+  String get settings_job_deleted_msg => 'Job \"[[name]]\" deleted';
+
+  @override
+  String get settings_dialog_update_breaks_content =>
+      'Update default break times to [[paid]] min paid and [[unpaid]] min unpaid?';
+
+  @override
+  String get settings_breaks_updated_msg => 'Break durations updated';
+
+  @override
+  String get settings_jobs_empty => 'No job types found.';
+
+  @override
+  String get settings_reset_success_msg => 'App reset successfully';
 
   @override
   String get home_empty_state_title => 'No shifts registered yet';
@@ -348,6 +443,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get expenses_dialog_delete_title => 'Delete Expense';
 
   @override
+  String get expenses_no_history => 'No expenses recorded';
+
+  @override
   String get expenses_save_expense_confirm_content =>
       'Save expense \"[[desc]]\" for [[amount]]?';
 
@@ -383,7 +481,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get add_shift_timer_accumulated_live => 'Accumulated Live';
 
   @override
-  String get add_shift_timer_countdown => 'Countdown:';
+  String get add_shift_timer_countdown => 'Countdown: ';
 
   @override
   String get add_shift_timer_break_paid => 'On paid break...';
@@ -409,6 +507,16 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get add_shift_timer_stopped_msg =>
       'The timer stopped. Would you like to save the shift or continue working?';
+
+  @override
+  String get add_shift_timer_reset_title => 'Reset Timer';
+
+  @override
+  String get add_shift_timer_reset_desc =>
+      'Are you sure you want to reset the timer? All current data will be lost.';
+
+  @override
+  String get add_shift_timer_resume_shift => 'Resume Shift';
 
   @override
   String get add_shift_manual_time_section => 'Time';
@@ -458,6 +566,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get add_shift_paste_parse_button => 'Parse & Save All';
 
   @override
+  String get add_shift_paste_parse_dialog_title => 'Parse Shifts';
+
+  @override
+  String get add_shift_paste_parse_dialog_desc =>
+      'Parse and save shifts from the pasted text?';
+
+  @override
+  String get add_shift_paste_error => 'Please check the format and try again';
+
+  @override
   String get add_shift_tips_title => 'Tips';
 
   @override
@@ -477,6 +595,36 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get add_shift_expenses_add_button => 'Add Expense';
+
+  @override
+  String get add_shift_shift_ended_dialog_title => 'Save Shift';
+
+  @override
+  String get add_shift_shift_ended_dialog_desc =>
+      'Are you sure you want to save the shift details?';
+
+  @override
+  String get add_shift_shift_ended_edit_dialog_desc =>
+      'Are you sure you want to save the shift details?';
+
+  @override
+  String get add_shift_shift_edit_dialog_title => 'Update Shift';
+
+  @override
+  String get add_shift_shift_saved => 'Shift saved successfully';
+
+  @override
+  String get add_shift_pick_a_job => 'Please select a job type first';
+
+  @override
+  String get add_shift_delete_title => 'Delete Shift';
+
+  @override
+  String get add_shift_delete_desc =>
+      'Are you sure you want to delete the shift from ';
+
+  @override
+  String get add_shift_delete_msg => 'Shift deleted successfully';
 
   @override
   String get notification_reminder_title => 'Shift Reminder';

@@ -56,7 +56,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
       builder: (ctx) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
           title: Text(
-            job == null ? l.onboarding_job_types_add_button : l.common_save,
+            job == null
+                ? l.onboarding_job_types_add_button
+                : l.onboarding_job_types_edit_button,
           ),
           content: SingleChildScrollView(
             child: Column(
@@ -151,7 +153,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 );
 
                 if (exists) {
-                  UIUtils.showSnackBar(context, l.common_error, isError: true);
+                  UIUtils.showSnackBar(
+                    context,
+                    l.onboarding_job_types_same,
+                    isError: true,
+                  );
                   return;
                 }
 
@@ -463,7 +469,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       value: settings.breaksEnabled,
                       onChanged: (val) => settings.setBreaksEnabled(val),
                       activeThumbColor: AppTheme.primaryDark,
-                      activeTrackColor: AppTheme.primary.withValues(alpha: 0.35),
+                      activeTrackColor: AppTheme.primary.withValues(
+                        alpha: 0.35,
+                      ),
                     ),
                     if (settings.breaksEnabled) ...[
                       const Divider(height: 16),

@@ -241,14 +241,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             prefixIcon: const Icon(Icons.translate_rounded),
           ),
           items: [
-            DropdownMenuItem(
-              value: 'he',
-              child: Text(l.settings_language_he),
-            ),
-            DropdownMenuItem(
-              value: 'en',
-              child: Text(l.settings_language_en),
-            ),
+            DropdownMenuItem(value: 'he', child: Text(l.settings_language_he)),
+            DropdownMenuItem(value: 'en', child: Text(l.settings_language_en)),
           ],
           onChanged: (val) {
             if (val != null) {
@@ -610,8 +604,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           final provider = context.read<ShiftProvider>();
                           final confirmed = await UIUtils.showConfirmDialog(
                             context: context,
-                            title: l.common_delete,
-                            content: '${l.common_delete} ${job.name}?',
+                            title: l.onboarding_job_types_delete_title,
+                            content:
+                                '${l.onboarding_job_types_delete_desc} ${job.name}?',
                             isDestructive: true,
                             confirmLabel: l.common_delete,
                             cancelLabel: l.common_cancel,
@@ -643,7 +638,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: Text(l.common_save),
+          title: Text(l.onboarding_job_types_edit_button),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -691,8 +686,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 if (name.isEmpty) return;
                 final confirmed = await UIUtils.showConfirmDialog(
                   context: context,
-                  title: l.common_confirm,
-                  content: '${l.common_confirm} $name?',
+                  title: l.onboarding_job_types_edit_button,
+                  content: '${l.onboarding_job_types_edit_button} $name?',
                 );
                 if (confirmed != true || !context.mounted) return;
                 final history = List<WageEntry>.from(job.wageHistory ?? [])
@@ -779,13 +774,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               alignment: AlignmentDirectional.centerStart,
               child: _currentPage > 0
                   ? TextButton.icon(
-                    onPressed: _previousPage,
-                    icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 16),
-                    label: Text(
-                      l.common_back,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  )
+                      onPressed: _previousPage,
+                      icon: const Icon(
+                        Icons.arrow_back_ios_new_rounded,
+                        size: 16,
+                      ),
+                      label: Text(
+                        l.common_back,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    )
                   : const SizedBox(),
             ),
           ),

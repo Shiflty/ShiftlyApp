@@ -36,19 +36,11 @@ class PersistenceService {
     if (jobBox.isEmpty) {
       final settings = settingsBox;
       final localeCode = settings.get('locale', defaultValue: 'he');
-      final currency = settings.get('currencySymbol', defaultValue: '₪');
       final l = lookupAppLocalizations(Locale(localeCode));
 
       double buffetRate = 40.22;
       double stewardRate = 37.20;
       double unloadingRate = 40.22;
-
-      if (currency != '₪') {
-        // Adjust default rates for non-ILS currencies to be more realistic (USD/EUR/GBP)
-        buffetRate = 15.0;
-        stewardRate = 13.5;
-        unloadingRate = 15.0;
-      }
 
       final epoch = DateTime(2020, 1, 1);
       final defaultJobs = [
@@ -82,7 +74,6 @@ class PersistenceService {
   Future<void> deleteAllData() async {
     final settings = settingsBox;
     final localeCode = settings.get('locale', defaultValue: 'he');
-    final currency = settings.get('currencySymbol', defaultValue: '₪');
 
     await shiftsBox.clear();
     await jobTypesBox.clear();
@@ -95,12 +86,6 @@ class PersistenceService {
     double buffetRate = 40.22;
     double stewardRate = 37.20;
     double unloadingRate = 40.22;
-
-    if (currency != '₪') {
-      buffetRate = 15.0;
-      stewardRate = 13.5;
-      unloadingRate = 15.0;
-    }
 
     final epoch = DateTime(2020, 1, 1);
     final defaultJobs = [
