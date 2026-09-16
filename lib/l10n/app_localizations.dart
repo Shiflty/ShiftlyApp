@@ -1265,7 +1265,7 @@ abstract class AppLocalizations {
   /// No description provided for @add_shift_delete_desc.
   ///
   /// In he, this message translates to:
-  /// **'האם אתה בטוח שברצונך למחוק את המשמרת מיום '**
+  /// **'האם אתה בטוח שברצונך למחוק את המשמרת מיום'**
   String get add_shift_delete_desc;
 
   /// No description provided for @add_shift_delete_msg.

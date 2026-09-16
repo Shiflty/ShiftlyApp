@@ -194,7 +194,7 @@
   "add_shift_shift_saved": "המשמרת נשמרה בהצלחה",
   "add_shift_pick_a_job": "בחר סוג עבודה קודם",
   "add_shift_delete_title": "מחיקת משמרת",
-  "add_shift_delete_desc": "האם אתה בטוח שברצונך למחוק את המשמרת מיום ",
+  "add_shift_delete_desc": "האם אתה בטוח שברצונך למחוק את המשמרת מיום",
   "add_shift_delete_msg": "המשמרת נמחקה בהצלחה: ",
   "notification_reminder_title": "תזכורת למשמרת",
   "notification_reminder_body": "המשמרת שלך ([[name]]) מתחילה בעוד [[time]]!",

@@ -621,7 +621,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get add_shift_delete_desc =>
-      'Are you sure you want to delete the shift from ';
+      'Are you sure you want to delete the shift from';
 
   @override
   String get add_shift_delete_msg => 'Shift deleted successfully';

@@ -659,7 +659,7 @@ class _MonthExpansionSection extends StatelessWidget {
           subtitle: Padding(
             padding: const EdgeInsets.only(top: 4),
             child: Text(
-              "$monthShiftCount ${l.common_shifts_count}  ·  ${UIUtils.formatCurrency(net, symbol: symbol)} ${l.home_shift_list_net_total}  ·  ${totalNetHours.toStringAsFixed(2)} ${l.common_hours_suffix}",
+              "$monthShiftCount ${l.common_shifts_count}  · ${l.home_shift_list_net_total}: ${UIUtils.formatCurrency(net, symbol: symbol)} ·  ${totalNetHours.toStringAsFixed(2)} ${l.common_hours_suffix}",
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ),

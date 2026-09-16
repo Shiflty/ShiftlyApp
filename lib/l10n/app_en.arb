@@ -194,7 +194,7 @@
   "add_shift_shift_saved": "Shift saved successfully",
   "add_shift_pick_a_job": "Please select a job type first",
   "add_shift_delete_title": "Delete Shift",
-  "add_shift_delete_desc": "Are you sure you want to delete the shift from ",
+  "add_shift_delete_desc": "Are you sure you want to delete the shift from",
   "add_shift_delete_msg": "Shift deleted successfully",
   "notification_reminder_title": "Shift Reminder",
   "notification_reminder_body": "Your shift ([[name]]) starts in [[time]]!",

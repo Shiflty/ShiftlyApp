@@ -619,7 +619,7 @@ class AppLocalizationsHe extends AppLocalizations {
 
   @override
   String get add_shift_delete_desc =>
-      'האם אתה בטוח שברצונך למחוק את המשמרת מיום ';
+      'האם אתה בטוח שברצונך למחוק את המשמרת מיום';
 
   @override
   String get add_shift_delete_msg => 'המשמרת נמחקה בהצלחה: ';

@@ -1247,7 +1247,7 @@ class _AddShiftScreenState extends State<AddShiftScreen>
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
-                '${l.add_shift_expenses_total} -${UIUtils.formatCurrency(total, symbol: symbol)}',
+                '${l.add_shift_expenses_total} ${UIUtils.formatCurrency(total, symbol: symbol)}',
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   color: AppTheme.expenseSoft,
