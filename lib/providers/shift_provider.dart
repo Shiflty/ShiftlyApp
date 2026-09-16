@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:shiftly/models/expense.dart';
 import 'package:shiftly/models/job_type.dart';
 import 'package:shiftly/models/shift.dart';
+import 'package:shiftly/models/shift_filter.dart';
 import 'package:shiftly/services/notification_service.dart';
 import 'package:shiftly/services/persistence_service.dart';
 
@@ -11,10 +12,71 @@ class ShiftProvider with ChangeNotifier {
 
   ShiftProvider(this._persistence);
 
+  ShiftFilter? _activeFilter;
+
+  ShiftFilter? get activeFilter => _activeFilter;
+
+  void setFilter(ShiftFilter? filter) {
+    _activeFilter = filter;
+    notifyListeners();
+  }
+
+  void clearFilter() {
+    _activeFilter = null;
+    notifyListeners();
+  }
+
   // Shifts
   List<Shift> get shifts =>
       _persistence.shiftsBox.values.toList()
         ..sort((a, b) => b.date.compareTo(a.date));
+
+  List<Shift> get filteredShifts {
+    final allShifts = shifts;
+    if (_activeFilter == null || !_activeFilter!.isActive) return allShifts;
+
+    return allShifts.where((shift) {
+      final filter = _activeFilter!;
+      final job = getJobTypeById(shift.jobTypeId);
+      final rate = shift.hourlyRate ?? job?.getRateForDate(shift.date) ?? 40.22;
+      final totalPay = shift.calculateTotalPay(rate);
+
+      if (filter.minWage != null && totalPay < filter.minWage!) return false;
+      if (filter.maxWage != null && totalPay > filter.maxWage!) return false;
+
+      if (filter.minTips != null && shift.tips < filter.minTips!) return false;
+      if (filter.maxTips != null && shift.tips > filter.maxTips!) return false;
+
+      final expenses = shift.totalAutomaticExpenses;
+      if (filter.minExpenses != null && expenses < filter.minExpenses!) {
+        return false;
+      }
+      if (filter.maxExpenses != null && expenses > filter.maxExpenses!) {
+        return false;
+      }
+
+      final duration = shift.netHours;
+      if (filter.minDuration != null && duration < filter.minDuration!) {
+        return false;
+      }
+      if (filter.maxDuration != null && duration > filter.maxDuration!) {
+        return false;
+      }
+
+      if (filter.startDate != null && shift.date.isBefore(filter.startDate!)) {
+        return false;
+      }
+      if (filter.endDate != null && shift.date.isAfter(filter.endDate!)) {
+        return false;
+      }
+
+      if (filter.jobTypeId != null && shift.jobTypeId != filter.jobTypeId) {
+        return false;
+      }
+
+      return true;
+    }).toList();
+  }
 
   // Expenses
   List<Expense> get expenses =>
@@ -144,7 +206,7 @@ class ShiftProvider with ChangeNotifier {
 
   Map<String, List<Shift>> get shiftsGroupedByMonth {
     return groupBy(
-      shifts,
+      filteredShifts,
       (Shift s) => "${s.date.year}-${s.date.month.toString().padLeft(2, '0')}",
     );
   }
@@ -155,6 +217,35 @@ class ShiftProvider with ChangeNotifier {
       (Expense e) =>
           "${e.date.year}-${e.date.month.toString().padLeft(2, '0')}",
     );
+  }
+
+  // ── Filter Helpers ────────────────────────────────────────────────
+  double get maxCapturedWage {
+    if (shifts.isEmpty) return 0;
+    return shifts
+        .map((s) {
+          final job = getJobTypeById(s.jobTypeId);
+          final rate = s.hourlyRate ?? job?.getRateForDate(s.date) ?? 40.22;
+          return s.calculateTotalPay(rate);
+        })
+        .reduce((a, b) => a > b ? a : b);
+  }
+
+  double get maxCapturedTips {
+    if (shifts.isEmpty) return 0;
+    return shifts.map((s) => s.tips).reduce((a, b) => a > b ? a : b);
+  }
+
+  double get maxCapturedExpenses {
+    if (shifts.isEmpty) return 0;
+    return shifts
+        .map((s) => s.totalAutomaticExpenses)
+        .reduce((a, b) => a > b ? a : b);
+  }
+
+  double get maxCapturedDuration {
+    if (shifts.isEmpty) return 0;
+    return shifts.map((s) => s.netHours).reduce((a, b) => a > b ? a : b);
   }
 
   Future<void> factoryReset() async {

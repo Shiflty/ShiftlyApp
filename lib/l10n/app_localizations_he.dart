@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -657,4 +658,68 @@ class AppLocalizationsHe extends AppLocalizations {
 
   @override
   String get notification_timer_body_countdown => 'ספירה לאחור: [[time]]';
+
+  @override
+  String get filter_title => 'סינון משמרות';
+
+  @override
+  String get filter_clear_all => 'נקה הכל';
+
+  @override
+  String get filter_apply => 'החל מסננים';
+
+  @override
+  String get filter_wage_range => 'טווח שכר כולל';
+
+  @override
+  String get filter_tips_range => 'טווח טיפים';
+
+  @override
+  String get filter_expenses_range => 'טווח הוצאות';
+
+  @override
+  String get filter_duration_range => 'טווח זמן (שעות)';
+
+  @override
+  String get filter_date_range => 'טווח תאריכים';
+
+  @override
+  String get filter_job_type => 'סוג עבודה';
+
+  @override
+  String get filter_min => 'מינימום';
+
+  @override
+  String get filter_max => 'מקסימום';
+
+  @override
+  String get filter_active_filters => 'מסננים פעילים:';
+
+  @override
+  String get filter_no_results => 'אין משמרות התואמות למסננים אלו';
+
+  @override
+  String get filter_chip_wage => 'שכר: [[min]] - [[max]]';
+
+  @override
+  String get filter_chip_tips => 'טיפים: [[min]] - [[max]]';
+
+  @override
+  String get filter_chip_expenses => 'הוצאות: [[min]] - [[max]]';
+
+  @override
+  String get filter_chip_duration => 'זמן: [[min]] - [[max]] שעות';
+
+  @override
+  String get filter_chip_date => 'תאריך: [[start]] - [[end]]';
+
+  @override
+  String get filter_chip_job => 'עבודה: [[name]]';
+
+  @override
+  String get filter_empty_state_title => 'אין משמרות תואמות';
+
+  @override
+  String get filter_empty_state_subtitle =>
+      'נסה לשנות את המסננים כדי לראות תוצאות';
 }

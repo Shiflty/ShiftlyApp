@@ -1339,6 +1339,132 @@ abstract class AppLocalizations {
   /// In he, this message translates to:
   /// **'ספירה לאחור: [[time]]'**
   String get notification_timer_body_countdown;
+
+  /// No description provided for @filter_title.
+  ///
+  /// In he, this message translates to:
+  /// **'סינון משמרות'**
+  String get filter_title;
+
+  /// No description provided for @filter_clear_all.
+  ///
+  /// In he, this message translates to:
+  /// **'נקה הכל'**
+  String get filter_clear_all;
+
+  /// No description provided for @filter_apply.
+  ///
+  /// In he, this message translates to:
+  /// **'החל מסננים'**
+  String get filter_apply;
+
+  /// No description provided for @filter_wage_range.
+  ///
+  /// In he, this message translates to:
+  /// **'טווח שכר כולל'**
+  String get filter_wage_range;
+
+  /// No description provided for @filter_tips_range.
+  ///
+  /// In he, this message translates to:
+  /// **'טווח טיפים'**
+  String get filter_tips_range;
+
+  /// No description provided for @filter_expenses_range.
+  ///
+  /// In he, this message translates to:
+  /// **'טווח הוצאות'**
+  String get filter_expenses_range;
+
+  /// No description provided for @filter_duration_range.
+  ///
+  /// In he, this message translates to:
+  /// **'טווח זמן (שעות)'**
+  String get filter_duration_range;
+
+  /// No description provided for @filter_date_range.
+  ///
+  /// In he, this message translates to:
+  /// **'טווח תאריכים'**
+  String get filter_date_range;
+
+  /// No description provided for @filter_job_type.
+  ///
+  /// In he, this message translates to:
+  /// **'סוג עבודה'**
+  String get filter_job_type;
+
+  /// No description provided for @filter_min.
+  ///
+  /// In he, this message translates to:
+  /// **'מינימום'**
+  String get filter_min;
+
+  /// No description provided for @filter_max.
+  ///
+  /// In he, this message translates to:
+  /// **'מקסימום'**
+  String get filter_max;
+
+  /// No description provided for @filter_active_filters.
+  ///
+  /// In he, this message translates to:
+  /// **'מסננים פעילים:'**
+  String get filter_active_filters;
+
+  /// No description provided for @filter_no_results.
+  ///
+  /// In he, this message translates to:
+  /// **'אין משמרות התואמות למסננים אלו'**
+  String get filter_no_results;
+
+  /// No description provided for @filter_chip_wage.
+  ///
+  /// In he, this message translates to:
+  /// **'שכר: [[min]] - [[max]]'**
+  String get filter_chip_wage;
+
+  /// No description provided for @filter_chip_tips.
+  ///
+  /// In he, this message translates to:
+  /// **'טיפים: [[min]] - [[max]]'**
+  String get filter_chip_tips;
+
+  /// No description provided for @filter_chip_expenses.
+  ///
+  /// In he, this message translates to:
+  /// **'הוצאות: [[min]] - [[max]]'**
+  String get filter_chip_expenses;
+
+  /// No description provided for @filter_chip_duration.
+  ///
+  /// In he, this message translates to:
+  /// **'זמן: [[min]] - [[max]] שעות'**
+  String get filter_chip_duration;
+
+  /// No description provided for @filter_chip_date.
+  ///
+  /// In he, this message translates to:
+  /// **'תאריך: [[start]] - [[end]]'**
+  String get filter_chip_date;
+
+  /// No description provided for @filter_chip_job.
+  ///
+  /// In he, this message translates to:
+  /// **'עבודה: [[name]]'**
+  String get filter_chip_job;
+
+  /// No description provided for @filter_empty_state_title.
+  ///
+  /// In he, this message translates to:
+  /// **'אין משמרות תואמות'**
+  String get filter_empty_state_title;
+
+  /// No description provided for @filter_empty_state_subtitle.
+  ///
+  /// In he, this message translates to:
+  /// **'נסה לשנות את המסננים כדי לראות תוצאות'**
+  String get filter_empty_state_subtitle;
 }
 
 class _AppLocalizationsDelegate

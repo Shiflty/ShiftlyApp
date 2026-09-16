@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -660,4 +661,68 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notification_timer_body_countdown => 'Countdown: [[time]]';
+
+  @override
+  String get filter_title => 'Shift Filters';
+
+  @override
+  String get filter_clear_all => 'Clear All';
+
+  @override
+  String get filter_apply => 'Apply Filters';
+
+  @override
+  String get filter_wage_range => 'Total Wage Range';
+
+  @override
+  String get filter_tips_range => 'Tips Range';
+
+  @override
+  String get filter_expenses_range => 'Expenses Range';
+
+  @override
+  String get filter_duration_range => 'Duration Range (Hours)';
+
+  @override
+  String get filter_date_range => 'Date Range';
+
+  @override
+  String get filter_job_type => 'Job Type';
+
+  @override
+  String get filter_min => 'Min';
+
+  @override
+  String get filter_max => 'Max';
+
+  @override
+  String get filter_active_filters => 'Active Filters:';
+
+  @override
+  String get filter_no_results => 'No shifts match these filters';
+
+  @override
+  String get filter_chip_wage => 'Wage: [[min]] - [[max]]';
+
+  @override
+  String get filter_chip_tips => 'Tips: [[min]] - [[max]]';
+
+  @override
+  String get filter_chip_expenses => 'Expenses: [[min]] - [[max]]';
+
+  @override
+  String get filter_chip_duration => 'Duration: [[min]] - [[max]] h';
+
+  @override
+  String get filter_chip_date => 'Date: [[start]] - [[end]]';
+
+  @override
+  String get filter_chip_job => 'Job: [[name]]';
+
+  @override
+  String get filter_empty_state_title => 'No matching shifts';
+
+  @override
+  String get filter_empty_state_subtitle =>
+      'Try adjusting your filters to see more results';
 }

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:shiftly/l10n/app_localizations.dart';
 import 'package:shiftly/models/break_type.dart';
 import 'package:shiftly/models/shift.dart';
+import 'package:shiftly/models/shift_filter.dart';
 import 'package:shiftly/providers/settings_provider.dart';
 import 'package:shiftly/providers/shift_provider.dart';
 import 'package:shiftly/providers/timer_provider.dart';
@@ -28,9 +29,9 @@ class HomeScreen extends StatelessWidget {
     double grandTotalBaseSalary = 0;
     double grandTotalTips = 0;
     double grandTotalExpenses = 0;
-    int grandTotalShifts = shiftProvider.shifts.length;
+    int grandTotalShifts = shiftProvider.filteredShifts.length;
 
-    for (var shift in shiftProvider.shifts) {
+    for (var shift in shiftProvider.filteredShifts) {
       final job = shiftProvider.getJobTypeById(shift.jobTypeId);
       final rate = shift.hourlyRate ?? job?.getRateForDate(shift.date) ?? 40.22;
       grandTotalNetHours += shift.netHours;
@@ -91,6 +92,26 @@ class HomeScreen extends StatelessWidget {
         ),
         actions: [
           IconButton(
+            icon: Icon(
+              shiftProvider.activeFilter?.isActive == true
+                  ? Icons.filter_alt_rounded
+                  : Icons.filter_alt_outlined,
+              color: shiftProvider.activeFilter?.isActive == true
+                  ? AppTheme.primary
+                  : null,
+            ),
+            tooltip: l.filter_title,
+            onPressed: () {
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                useSafeArea: true,
+                backgroundColor: Colors.transparent,
+                builder: (context) => const _FilterBottomSheet(),
+              );
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.settings_outlined),
             tooltip: l.settings_title,
             onPressed: () => Navigator.push(
@@ -106,9 +127,13 @@ class HomeScreen extends StatelessWidget {
           children: [
             if (timerProvider.startTime != null)
               _ActiveTimerBanner(timer: timerProvider),
+            if (shiftProvider.activeFilter?.isActive == true)
+              const _ActiveFiltersBar(),
             Expanded(
               child: groupedShifts.isEmpty && timerProvider.startTime == null
-                  ? _EmptyState()
+                  ? (shiftProvider.activeFilter?.isActive == true
+                        ? _FilterEmptyState()
+                        : _EmptyState())
                   : ListView.builder(
                       padding: const EdgeInsets.fromLTRB(
                         AppTheme.spaceSm,
@@ -1036,6 +1061,517 @@ class _ShiftTag extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _FilterEmptyState extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
+    return Center(
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(AppTheme.spaceLg),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(AppTheme.spaceMd),
+                decoration: BoxDecoration(
+                  color: AppTheme.warningSoft.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.filter_list_off_rounded,
+                  size: 56,
+                  color: AppTheme.warningSoft.withValues(alpha: 0.7),
+                ),
+              ),
+              const SizedBox(height: AppTheme.spaceSm),
+              Text(
+                l.filter_empty_state_title,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: AppTheme.spaceXs),
+              Text(
+                l.filter_empty_state_subtitle,
+                style: Theme.of(context).textTheme.bodySmall,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: AppTheme.spaceMd),
+              TextButton.icon(
+                onPressed: () => context.read<ShiftProvider>().clearFilter(),
+                icon: const Icon(Icons.clear_all_rounded),
+                label: Text(l.filter_clear_all),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ActiveFiltersBar extends StatelessWidget {
+  const _ActiveFiltersBar();
+
+  @override
+  Widget build(BuildContext context) {
+    final provider = context.watch<ShiftProvider>();
+    final filter = provider.activeFilter;
+    if (filter == null || !filter.isActive) return const SizedBox.shrink();
+
+    final l = AppLocalizations.of(context)!;
+    final symbol = context.read<SettingsProvider>().currencySymbol;
+
+    return Container(
+      height: 48,
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: AppTheme.spaceSm),
+        children: [
+          Center(
+            child: Text(
+              l.filter_active_filters,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold),
+            ),
+          ),
+          const SizedBox(width: 8),
+          if (filter.minWage != null || filter.maxWage != null)
+            _ActiveFilterChip(
+              label: l.filter_chip_wage
+                  .replaceFirst(
+                    '[[min]]',
+                    UIUtils.formatCurrency(filter.minWage ?? 0, symbol: symbol),
+                  )
+                  .replaceFirst(
+                    '[[max]]',
+                    UIUtils.formatCurrency(
+                      filter.maxWage ?? 5000,
+                      symbol: symbol,
+                    ),
+                  ),
+              onDeleted: () => provider.setFilter(
+                filter.copyWith(clearMinWage: true, clearMaxWage: true),
+              ),
+            ),
+          if (filter.minTips != null || filter.maxTips != null)
+            _ActiveFilterChip(
+              label: l.filter_chip_tips
+                  .replaceFirst(
+                    '[[min]]',
+                    UIUtils.formatCurrency(filter.minTips ?? 0, symbol: symbol),
+                  )
+                  .replaceFirst(
+                    '[[max]]',
+                    UIUtils.formatCurrency(
+                      filter.maxTips ?? 1000,
+                      symbol: symbol,
+                    ),
+                  ),
+              onDeleted: () => provider.setFilter(
+                filter.copyWith(clearMinTips: true, clearMaxTips: true),
+              ),
+            ),
+          if (filter.minExpenses != null || filter.maxExpenses != null)
+            _ActiveFilterChip(
+              label: l.filter_chip_expenses
+                  .replaceFirst(
+                    '[[min]]',
+                    UIUtils.formatCurrency(
+                      filter.minExpenses ?? 0,
+                      symbol: symbol,
+                    ),
+                  )
+                  .replaceFirst(
+                    '[[max]]',
+                    UIUtils.formatCurrency(
+                      filter.maxExpenses ?? 500,
+                      symbol: symbol,
+                    ),
+                  ),
+              onDeleted: () => provider.setFilter(
+                filter.copyWith(clearMinExpenses: true, clearMaxExpenses: true),
+              ),
+            ),
+          if (filter.minDuration != null || filter.maxDuration != null)
+            _ActiveFilterChip(
+              label: l.filter_chip_duration
+                  .replaceFirst(
+                    '[[min]]',
+                    (filter.minDuration ?? 0).toStringAsFixed(1),
+                  )
+                  .replaceFirst(
+                    '[[max]]',
+                    (filter.maxDuration ?? 24).toStringAsFixed(1),
+                  ),
+              onDeleted: () => provider.setFilter(
+                filter.copyWith(clearMinDuration: true, clearMaxDuration: true),
+              ),
+            ),
+          if (filter.startDate != null || filter.endDate != null)
+            _ActiveFilterChip(
+              label: l.filter_chip_date
+                  .replaceFirst(
+                    '[[start]]',
+                    filter.startDate != null
+                        ? DateFormat('dd/MM').format(filter.startDate!)
+                        : '...',
+                  )
+                  .replaceFirst(
+                    '[[end]]',
+                    filter.endDate != null
+                        ? DateFormat('dd/MM').format(filter.endDate!)
+                        : '...',
+                  ),
+              onDeleted: () => provider.setFilter(
+                filter.copyWith(clearStartDate: true, clearEndDate: true),
+              ),
+            ),
+          if (filter.jobTypeId != null)
+            _ActiveFilterChip(
+              label: l.filter_chip_job.replaceFirst(
+                '[[name]]',
+                provider.getJobTypeById(filter.jobTypeId!)?.name ?? '?',
+              ),
+              onDeleted: () =>
+                  provider.setFilter(filter.copyWith(clearJobTypeId: true)),
+            ),
+          const SizedBox(width: 4),
+          TextButton(
+            onPressed: () => provider.clearFilter(),
+            child: Text(
+              l.filter_clear_all,
+              style: const TextStyle(fontSize: 12),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ActiveFilterChip extends StatelessWidget {
+  final String label;
+  final VoidCallback onDeleted;
+
+  const _ActiveFilterChip({required this.label, required this.onDeleted});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 6),
+      child: InputChip(
+        label: Text(label, style: const TextStyle(fontSize: 11)),
+        onDeleted: onDeleted,
+        deleteIcon: const Icon(Icons.close_rounded, size: 14),
+        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        visualDensity: VisualDensity.compact,
+        backgroundColor: AppTheme.primary.withValues(alpha: 0.1),
+        side: BorderSide(color: AppTheme.primary.withValues(alpha: 0.2)),
+      ),
+    );
+  }
+}
+
+class _FilterBottomSheet extends StatefulWidget {
+  const _FilterBottomSheet();
+
+  @override
+  State<_FilterBottomSheet> createState() => _FilterBottomSheetState();
+}
+
+class _FilterBottomSheetState extends State<_FilterBottomSheet> {
+  late ShiftFilter _filter;
+
+  @override
+  void initState() {
+    super.initState();
+    _filter = context.read<ShiftProvider>().activeFilter ?? ShiftFilter();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
+    final shiftProvider = context.read<ShiftProvider>();
+    final jobTypes = shiftProvider.jobTypes;
+    final symbol = context.read<SettingsProvider>().currencySymbol;
+
+    // Calculate dynamic maximums
+    double maxWage = shiftProvider.maxCapturedWage;
+    if (maxWage == 0) maxWage = 500;
+
+    double maxTips = shiftProvider.maxCapturedTips;
+    if (maxTips == 0) maxTips = 500;
+
+    double maxExpenses = shiftProvider.maxCapturedExpenses;
+    if (maxExpenses == 0) maxExpenses = 500;
+
+    double maxDuration = shiftProvider.maxCapturedDuration;
+    if (maxDuration == 0) maxDuration = 24;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(AppTheme.radiusXl),
+        ),
+      ),
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom + AppTheme.spaceMd,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: 8),
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurface.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppTheme.spaceMd,
+              AppTheme.spaceMd,
+              AppTheme.spaceMd,
+              0,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  l.filter_title,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                TextButton(
+                  onPressed: () {
+                    setState(() {
+                      _filter = ShiftFilter();
+                    });
+                  },
+                  child: Text(l.filter_clear_all),
+                ),
+              ],
+            ),
+          ),
+          const Divider(),
+          Flexible(
+            child: ListView(
+              shrinkWrap: true,
+              padding: const EdgeInsets.symmetric(horizontal: AppTheme.spaceMd),
+              children: [
+                _buildRangeSection(
+                  title: l.filter_wage_range,
+                  min: 0,
+                  max: maxWage,
+                  values: RangeValues(
+                    (_filter.minWage ?? 0).clamp(0, maxWage),
+                    (_filter.maxWage ?? maxWage).clamp(0, maxWage),
+                  ),
+                  onChanged: (v) {
+                    setState(() {
+                      _filter = _filter.copyWith(
+                        minWage: v.start,
+                        maxWage: v.end,
+                      );
+                    });
+                  },
+                  labelBuilder: (v) =>
+                      UIUtils.formatCurrency(v, symbol: symbol),
+                ),
+                _buildRangeSection(
+                  title: l.filter_tips_range,
+                  min: 0,
+                  max: maxTips,
+                  values: RangeValues(
+                    (_filter.minTips ?? 0).clamp(0, maxTips),
+                    (_filter.maxTips ?? maxTips).clamp(0, maxTips),
+                  ),
+                  onChanged: (v) {
+                    setState(() {
+                      _filter = _filter.copyWith(
+                        minTips: v.start,
+                        maxTips: v.end,
+                      );
+                    });
+                  },
+                  labelBuilder: (v) =>
+                      UIUtils.formatCurrency(v, symbol: symbol),
+                ),
+                _buildRangeSection(
+                  title: l.filter_expenses_range,
+                  min: 0,
+                  max: maxExpenses,
+                  values: RangeValues(
+                    (_filter.minExpenses ?? 0).clamp(0, maxExpenses),
+                    (_filter.maxExpenses ?? maxExpenses).clamp(0, maxExpenses),
+                  ),
+                  onChanged: (v) {
+                    setState(() {
+                      _filter = _filter.copyWith(
+                        minExpenses: v.start,
+                        maxExpenses: v.end,
+                      );
+                    });
+                  },
+                  labelBuilder: (v) =>
+                      UIUtils.formatCurrency(v, symbol: symbol),
+                ),
+                _buildRangeSection(
+                  title: l.filter_duration_range,
+                  min: 0,
+                  max: maxDuration,
+                  values: RangeValues(
+                    (_filter.minDuration ?? 0).clamp(0, maxDuration),
+                    (_filter.maxDuration ?? maxDuration).clamp(0, maxDuration),
+                  ),
+                  onChanged: (v) {
+                    setState(() {
+                      _filter = _filter.copyWith(
+                        minDuration: v.start,
+                        maxDuration: v.end,
+                      );
+                    });
+                  },
+                  labelBuilder: (v) => v.toStringAsFixed(1),
+                ),
+                const SizedBox(height: AppTheme.spaceSm),
+                Material(
+                  color: Colors.transparent,
+                  child: ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(
+                      l.filter_date_range,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Text(
+                      _filter.startDate != null && _filter.endDate != null
+                          ? "${DateFormat.yMd().format(_filter.startDate!)} - ${DateFormat.yMd().format(_filter.endDate!)}"
+                          : l.common_start,
+                    ),
+                    trailing: const Icon(Icons.calendar_today_rounded),
+                    onTap: () async {
+                      final range = await showDateRangePicker(
+                        context: context,
+                        firstDate: DateTime(2020),
+                        lastDate: DateTime(2100),
+                        initialDateRange:
+                            _filter.startDate != null && _filter.endDate != null
+                            ? DateTimeRange(
+                                start: _filter.startDate!,
+                                end: _filter.endDate!,
+                              )
+                            : null,
+                      );
+                      if (range != null) {
+                        setState(() {
+                          _filter = _filter.copyWith(
+                            startDate: range.start,
+                            endDate: range.end,
+                          );
+                        });
+                      }
+                    },
+                  ),
+                ),
+                const SizedBox(height: AppTheme.spaceSm),
+                Text(
+                  l.filter_job_type,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  children: [
+                    ChoiceChip(
+                      label: Text(l.filter_clear_all),
+                      selected: _filter.jobTypeId == null,
+                      onSelected: (s) => setState(() {
+                        _filter = _filter.copyWith(clearJobTypeId: true);
+                      }),
+                    ),
+                    ...jobTypes.map((job) {
+                      return ChoiceChip(
+                        label: Text(job.name),
+                        selected: _filter.jobTypeId == job.id,
+                        onSelected: (s) => setState(() {
+                          _filter = _filter.copyWith(jobTypeId: job.id);
+                        }),
+                      );
+                    }),
+                  ],
+                ),
+                const SizedBox(height: AppTheme.spaceLg),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppTheme.spaceMd),
+            child: ElevatedButton(
+              onPressed: () {
+                shiftProvider.setFilter(_filter);
+                Navigator.pop(context);
+              },
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 50),
+                backgroundColor: AppTheme.primary,
+                foregroundColor: Colors.white,
+              ),
+              child: Text(l.filter_apply),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRangeSection({
+    required String title,
+    required double min,
+    required double max,
+    required RangeValues values,
+    required ValueChanged<RangeValues> onChanged,
+    required String Function(double) labelBuilder,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: AppTheme.spaceSm),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text(
+              "${labelBuilder(values.start)} - ${labelBuilder(values.end)}",
+              style: TextStyle(
+                color: AppTheme.primary,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
+        RangeSlider(
+          values: values,
+          min: min,
+          max: max,
+          divisions: max > min ? (max - min).toInt().clamp(1, 10000) : 1,
+          activeColor: AppTheme.primary,
+          onChanged: onChanged,
+        ),
+      ],
     );
   }
 }
