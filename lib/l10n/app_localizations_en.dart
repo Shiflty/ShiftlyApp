@@ -666,7 +666,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get filter_title => 'Shift Filters';
 
   @override
-  String get filter_clear_all => 'Clear All';
+  String get filter_clear_all => 'Reset Filter';
 
   @override
   String get filter_apply => 'Apply Filters';
@@ -688,6 +688,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get filter_job_type => 'Job Type';
+
+  @override
+  String get filter_select_all => 'Select All';
+
+  @override
+  String get filter_error_no_job_selected =>
+      'Please select at least one job type';
 
   @override
   String get filter_min => 'Min';

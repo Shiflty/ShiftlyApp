@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:shiftly/l10n/app_localizations.dart';
 import 'package:shiftly/models/break_type.dart';
+import 'package:shiftly/models/job_type.dart';
 import 'package:shiftly/models/shift.dart';
 import 'package:shiftly/models/shift_filter.dart';
 import 'package:shiftly/providers/settings_provider.dart';
@@ -1233,14 +1234,17 @@ class _ActiveFiltersBar extends StatelessWidget {
                 filter.copyWith(clearStartDate: true, clearEndDate: true),
               ),
             ),
-          if (filter.jobTypeId != null)
+          if (filter.typeIds != null && filter.typeIds!.isNotEmpty)
             _ActiveFilterChip(
               label: l.filter_chip_job.replaceFirst(
                 '[[name]]',
-                provider.getJobTypeById(filter.jobTypeId!)?.name ?? '?',
+                filter.typeIds!.length == 1
+                    ? provider.getJobTypeById(filter.typeIds!.first)?.name ??
+                          '?'
+                    : '${filter.typeIds!.length} ${l.common_shifts_count}',
               ),
               onDeleted: () =>
-                  provider.setFilter(filter.copyWith(clearJobTypeId: true)),
+                  provider.setFilter(filter.copyWith(clearTypeIds: true)),
             ),
           const SizedBox(width: 4),
           TextButton(
@@ -1292,7 +1296,15 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
   @override
   void initState() {
     super.initState();
-    _filter = context.read<ShiftProvider>().activeFilter ?? ShiftFilter();
+    final active = context.read<ShiftProvider>().activeFilter;
+    if (active != null) {
+      _filter = active;
+    } else {
+      final jobTypes = context.read<ShiftProvider>().jobTypes;
+      _filter = ShiftFilter(
+        typeIds: jobTypes.isNotEmpty ? [jobTypes.first.id] : null,
+      );
+    }
   }
 
   @override
@@ -1361,7 +1373,9 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
                       _filter = ShiftFilter();
                     });
                   },
-                  child: Text(l.filter_clear_all),
+                  child: Text(
+                    l.filter_clear_all,
+                  ), // Label might be "איפוס סינון" in ARB
                 ),
               ],
             ),
@@ -1370,7 +1384,12 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
           Flexible(
             child: ListView(
               shrinkWrap: true,
-              padding: const EdgeInsets.symmetric(horizontal: AppTheme.spaceMd),
+              padding: const EdgeInsets.fromLTRB(
+                AppTheme.spaceMd,
+                0,
+                AppTheme.spaceMd,
+                40, // Spacing for navigation buttons
+              ),
               children: [
                 _buildRangeSection(
                   title: l.filter_wage_range,
@@ -1487,40 +1506,28 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
                   ),
                 ),
                 const SizedBox(height: AppTheme.spaceSm),
-                Text(
-                  l.filter_job_type,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  children: [
-                    ChoiceChip(
-                      label: Text(l.filter_clear_all),
-                      selected: _filter.jobTypeId == null,
-                      onSelected: (s) => setState(() {
-                        _filter = _filter.copyWith(clearJobTypeId: true);
-                      }),
-                    ),
-                    ...jobTypes.map((job) {
-                      return ChoiceChip(
-                        label: Text(job.name),
-                        selected: _filter.jobTypeId == job.id,
-                        onSelected: (s) => setState(() {
-                          _filter = _filter.copyWith(jobTypeId: job.id);
-                        }),
-                      );
-                    }),
-                  ],
-                ),
+                _buildJobTypeMultiSelect(jobTypes),
                 const SizedBox(height: AppTheme.spaceLg),
               ],
             ),
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppTheme.spaceMd),
+            padding: const EdgeInsets.fromLTRB(
+              AppTheme.spaceMd,
+              0,
+              AppTheme.spaceMd,
+              24, // Spacing for buttons
+            ),
             child: ElevatedButton(
               onPressed: () {
+                if (_filter.typeIds == null || _filter.typeIds!.isEmpty) {
+                  UIUtils.showSnackBar(
+                    context,
+                    l.filter_error_no_job_selected,
+                    isError: true,
+                  );
+                  return;
+                }
                 shiftProvider.setFilter(_filter);
                 Navigator.pop(context);
               },
@@ -1534,6 +1541,84 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildJobTypeMultiSelect(List<JobType> jobTypes) {
+    final l = AppLocalizations.of(context)!;
+    final selectedIds = _filter.typeIds ?? [];
+    final allSelected =
+        jobTypes.isNotEmpty && selectedIds.length == jobTypes.length;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              l.filter_job_type,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            if (jobTypes.length > 1)
+              TextButton(
+                onPressed: () {
+                  setState(() {
+                    if (allSelected) {
+                      _filter = _filter.copyWith(typeIds: []);
+                    } else {
+                      _filter = _filter.copyWith(
+                        typeIds: jobTypes.map((j) => j.id).toList(),
+                      );
+                    }
+                  });
+                },
+                child: Text(
+                  allSelected ? l.filter_clear_all : l.filter_select_all,
+                  style: const TextStyle(fontSize: 12),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: Theme.of(
+              context,
+            ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+            borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+            border: Border.all(
+              color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
+            ),
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: Column(
+              children: jobTypes.map((JobType job) {
+                final isSelected = selectedIds.contains(job.id);
+                return CheckboxListTile(
+                  title: Text(job.name, style: const TextStyle(fontSize: 14)),
+                  value: isSelected,
+                  controlAffinity: ListTileControlAffinity.trailing,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                  dense: true,
+                  onChanged: (bool? value) {
+                    setState(() {
+                      final newList = List<String>.from(selectedIds);
+                      if (value == true) {
+                        newList.add(job.id);
+                      } else {
+                        newList.remove(job.id);
+                      }
+                      _filter = _filter.copyWith(typeIds: newList);
+                    });
+                  },
+                );
+              }).toList(),
+            ),
+          ),
+        ),
+      ],
     );
   }
 

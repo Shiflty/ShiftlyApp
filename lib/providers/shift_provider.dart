@@ -33,10 +33,10 @@ class ShiftProvider with ChangeNotifier {
 
   List<Shift> get filteredShifts {
     final allShifts = shifts;
-    if (_activeFilter == null || !_activeFilter!.isActive) return allShifts;
+    final ShiftFilter? filter = _activeFilter;
+    if (filter == null || !filter.isActive) return allShifts;
 
     return allShifts.where((shift) {
-      final filter = _activeFilter!;
       final job = getJobTypeById(shift.jobTypeId);
       final rate = shift.hourlyRate ?? job?.getRateForDate(shift.date) ?? 40.22;
       final totalPay = shift.calculateTotalPay(rate);
@@ -70,7 +70,9 @@ class ShiftProvider with ChangeNotifier {
         return false;
       }
 
-      if (filter.jobTypeId != null && shift.jobTypeId != filter.jobTypeId) {
+      if (filter.typeIds != null &&
+          filter.typeIds!.isNotEmpty &&
+          !filter.typeIds!.contains(shift.jobTypeId)) {
         return false;
       }
 

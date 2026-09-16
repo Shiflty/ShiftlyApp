@@ -1349,7 +1349,7 @@ abstract class AppLocalizations {
   /// No description provided for @filter_clear_all.
   ///
   /// In he, this message translates to:
-  /// **'נקה הכל'**
+  /// **'איפוס סינון'**
   String get filter_clear_all;
 
   /// No description provided for @filter_apply.
@@ -1393,6 +1393,18 @@ abstract class AppLocalizations {
   /// In he, this message translates to:
   /// **'סוג עבודה'**
   String get filter_job_type;
+
+  /// No description provided for @filter_select_all.
+  ///
+  /// In he, this message translates to:
+  /// **'בחר הכל'**
+  String get filter_select_all;
+
+  /// No description provided for @filter_error_no_job_selected.
+  ///
+  /// In he, this message translates to:
+  /// **'נא לבחור לפחות סוג עבודה אחד'**
+  String get filter_error_no_job_selected;
 
   /// No description provided for @filter_min.
   ///

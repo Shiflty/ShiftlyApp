@@ -9,7 +9,7 @@ class ShiftFilter {
   final double? maxDuration;
   final DateTime? startDate;
   final DateTime? endDate;
-  final String? jobTypeId;
+  final List<String>? typeIds;
 
   ShiftFilter({
     this.minWage,
@@ -22,7 +22,7 @@ class ShiftFilter {
     this.maxDuration,
     this.startDate,
     this.endDate,
-    this.jobTypeId,
+    this.typeIds,
   });
 
   bool get isActive =>
@@ -36,7 +36,7 @@ class ShiftFilter {
       maxDuration != null ||
       startDate != null ||
       endDate != null ||
-      jobTypeId != null;
+      (typeIds != null && typeIds!.isNotEmpty);
 
   ShiftFilter copyWith({
     double? minWage,
@@ -49,7 +49,7 @@ class ShiftFilter {
     double? maxDuration,
     DateTime? startDate,
     DateTime? endDate,
-    String? jobTypeId,
+    List<String>? typeIds,
     bool clearMinWage = false,
     bool clearMaxWage = false,
     bool clearMinTips = false,
@@ -60,7 +60,7 @@ class ShiftFilter {
     bool clearMaxDuration = false,
     bool clearStartDate = false,
     bool clearEndDate = false,
-    bool clearJobTypeId = false,
+    bool clearTypeIds = false,
   }) {
     return ShiftFilter(
       minWage: clearMinWage ? null : minWage ?? this.minWage,
@@ -73,7 +73,7 @@ class ShiftFilter {
       maxDuration: clearMaxDuration ? null : maxDuration ?? this.maxDuration,
       startDate: clearStartDate ? null : startDate ?? this.startDate,
       endDate: clearEndDate ? null : endDate ?? this.endDate,
-      jobTypeId: clearJobTypeId ? null : jobTypeId ?? this.jobTypeId,
+      typeIds: clearTypeIds ? null : typeIds ?? this.typeIds,
     );
   }
 }

@@ -663,7 +663,7 @@ class AppLocalizationsHe extends AppLocalizations {
   String get filter_title => 'סינון משמרות';
 
   @override
-  String get filter_clear_all => 'נקה הכל';
+  String get filter_clear_all => 'איפוס סינון';
 
   @override
   String get filter_apply => 'החל מסננים';
@@ -685,6 +685,12 @@ class AppLocalizationsHe extends AppLocalizations {
 
   @override
   String get filter_job_type => 'סוג עבודה';
+
+  @override
+  String get filter_select_all => 'בחר הכל';
+
+  @override
+  String get filter_error_no_job_selected => 'נא לבחור לפחות סוג עבודה אחד';
 
   @override
   String get filter_min => 'מינימום';
