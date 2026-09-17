@@ -1,5 +1,7 @@
 # Shiftly - Multi-Platform Shift Tracker
 
+מגניב
+
 <div dir="rtl">
 
 Shiftly היא פלטפורמה מקיפה לניהול ומעקב משמרות עבודה והוצאות נלוות, המיועדת לספק מענה מדויק לחישוב
