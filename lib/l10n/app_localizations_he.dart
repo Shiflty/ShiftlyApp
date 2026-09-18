@@ -1,6 +1,5 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
-
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -728,4 +727,61 @@ class AppLocalizationsHe extends AppLocalizations {
   @override
   String get filter_empty_state_subtitle =>
       'נסה לשנות את המסננים כדי לראות תוצאות';
+
+  @override
+  String get auth_login_title => 'ברוכים השבים';
+
+  @override
+  String get auth_register_title => 'יצירת חשבון חדש';
+
+  @override
+  String get auth_full_name_label => 'שם מלא';
+
+  @override
+  String get auth_email_label => 'אימייל';
+
+  @override
+  String get auth_password_label => 'סיסמה';
+
+  @override
+  String get auth_error_name_empty => 'נא להזין שם';
+
+  @override
+  String get auth_error_email_invalid => 'אימייל לא תקין';
+
+  @override
+  String get auth_error_password_length => 'סיסמה חייבת להיות לפחות 6 תווים';
+
+  @override
+  String get auth_login_button => 'התחברות';
+
+  @override
+  String get auth_register_button => 'הרשמה';
+
+  @override
+  String get auth_no_account_link => 'אין לך חשבון? הירשם עכשיו';
+
+  @override
+  String get auth_has_account_link => 'כבר יש לך חשבון? התחבר';
+
+  @override
+  String get auth_error_generic => 'שגיאה בביצוע הפעולה. נא לנסות שוב.';
+
+  @override
+  String get settings_section_account => 'חשבון';
+
+  @override
+  String get settings_logout_title => 'התנתקות מהמערכת';
+
+  @override
+  String get settings_logout_subtitle => 'התנתקות מהחשבון הנוכחי';
+
+  @override
+  String get settings_logout_dialog_title => 'התנתקות';
+
+  @override
+  String get settings_logout_confirm_content => 'האם אתה בטוח שברצונך להתנתק?';
+
+  @override
+  String get settings_logout_confirm_button => 'התנתק';
 }

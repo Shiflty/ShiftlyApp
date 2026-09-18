@@ -1,6 +1,5 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
-
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -732,4 +731,63 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get filter_empty_state_subtitle =>
       'Try adjusting your filters to see more results';
+
+  @override
+  String get auth_login_title => 'Welcome Back';
+
+  @override
+  String get auth_register_title => 'Create New Account';
+
+  @override
+  String get auth_full_name_label => 'Full Name';
+
+  @override
+  String get auth_email_label => 'Email';
+
+  @override
+  String get auth_password_label => 'Password';
+
+  @override
+  String get auth_error_name_empty => 'Please enter name';
+
+  @override
+  String get auth_error_email_invalid => 'Invalid email';
+
+  @override
+  String get auth_error_password_length =>
+      'Password must be at least 6 characters';
+
+  @override
+  String get auth_login_button => 'Login';
+
+  @override
+  String get auth_register_button => 'Register';
+
+  @override
+  String get auth_no_account_link => 'No account? Register now';
+
+  @override
+  String get auth_has_account_link => 'Already have an account? Login';
+
+  @override
+  String get auth_error_generic => 'An error occurred. Please try again.';
+
+  @override
+  String get settings_section_account => 'Account';
+
+  @override
+  String get settings_logout_title => 'Logout from system';
+
+  @override
+  String get settings_logout_subtitle => 'Logout from current account';
+
+  @override
+  String get settings_logout_dialog_title => 'Logout';
+
+  @override
+  String get settings_logout_confirm_content =>
+      'Are you sure you want to logout?';
+
+  @override
+  String get settings_logout_confirm_button => 'Logout';
 }

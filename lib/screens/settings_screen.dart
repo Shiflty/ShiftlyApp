@@ -4,8 +4,10 @@ import 'package:provider/provider.dart';
 import 'package:shiftly/l10n/app_localizations.dart';
 import 'package:shiftly/models/job_type.dart';
 import 'package:shiftly/models/wage_entry.dart';
+import 'package:shiftly/providers/auth_provider.dart';
 import 'package:shiftly/providers/settings_provider.dart';
 import 'package:shiftly/providers/shift_provider.dart';
+import 'package:shiftly/screens/auth_screen.dart';
 import 'package:shiftly/services/notification_service.dart';
 import 'package:shiftly/theme/app_theme.dart';
 import 'package:shiftly/utils/ui_utils.dart';
@@ -247,6 +249,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final settings = context.watch<SettingsProvider>();
+    final auth = context.watch<AuthProvider>();
     final symbol = settings.currencySymbol;
     final rawJobs = context.watch<ShiftProvider>().jobTypes;
     final l = AppLocalizations.of(context)!;
@@ -277,6 +280,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
             120, // Increased for ad space and system navigation
           ),
           children: [
+            _buildSectionHeader(context, l.settings_user_details_title),
+            const SizedBox(height: AppTheme.spaceXs),
+            Card(
+              child: Column(
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.person_outline_rounded, color: AppTheme.primaryDark),
+                    title: Text(l.settings_user_name),
+                    subtitle: Text(auth.userName ?? ''),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.edit_outlined, size: 20),
+                      onPressed: () => _showEditProfileDialog(context),
+                    ),
+                  ),
+                  const Divider(height: 1, indent: 56),
+                  ListTile(
+                    leading: const Icon(Icons.email_outlined, color: AppTheme.primaryDark),
+                    title: Text(l.settings_user_email),
+                    subtitle: Text(auth.userEmail ?? ''),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppTheme.spaceLg),
             _buildSectionHeader(context, l.settings_section_app),
             const SizedBox(height: AppTheme.spaceXs),
             Card(
@@ -563,6 +590,43 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               ),
             const SizedBox(height: AppTheme.spaceLg),
+            _buildSectionHeader(context, l.settings_section_account),
+            const SizedBox(height: AppTheme.spaceXs),
+            Card(
+              child: ListTile(
+                title: Text(
+                  l.settings_logout_title,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                subtitle: Text(l.settings_logout_subtitle),
+                leading: const Icon(
+                  Icons.logout_rounded,
+                  color: AppTheme.primaryDark,
+                ),
+                onTap: () async {
+                  final confirmed = await UIUtils.showConfirmDialog(
+                    context: context,
+                    title: l.settings_logout_dialog_title,
+                    content: l.settings_logout_confirm_content,
+                    confirmLabel: l.settings_logout_confirm_button,
+                    isDestructive: true,
+                  );
+
+                  if (confirmed == true && context.mounted) {
+                    await context.read<AuthProvider>().logout();
+                    if (context.mounted) {
+                      Navigator.of(context).pushAndRemoveUntil(
+                        MaterialPageRoute(
+                          builder: (context) => const AuthScreen(),
+                        ),
+                        (route) => false,
+                      );
+                    }
+                  }
+                },
+              ),
+            ),
+            const SizedBox(height: AppTheme.spaceLg),
             _buildSectionHeader(context, l.settings_section_danger),
             const SizedBox(height: AppTheme.spaceXs),
             Card(
@@ -584,6 +648,55 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showEditProfileDialog(BuildContext context) {
+    final auth = context.read<AuthProvider>();
+    final l = AppLocalizations.of(context)!;
+    final nameController = TextEditingController(text: auth.userName);
+    final emailController = TextEditingController(text: auth.userEmail);
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l.settings_user_edit_title),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameController,
+              decoration: InputDecoration(labelText: l.settings_user_name),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: emailController,
+              decoration: InputDecoration(labelText: l.settings_user_email),
+              keyboardType: TextInputType.emailAddress,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l.common_cancel)),
+          ElevatedButton(
+            onPressed: () async {
+              try {
+                await context.read<AuthProvider>().updateProfile(
+                  nameController.text.trim(),
+                  emailController.text.trim(),
+                );
+                if (context.mounted) {
+                  Navigator.pop(ctx);
+                  UIUtils.showSnackBar(context, l.settings_user_update_success);
+                }
+              } catch (e) {
+                if (context.mounted) UIUtils.showSnackBar(context, l.common_error, isError: true);
+              }
+            },
+            child: Text(l.common_save),
+          ),
+        ],
       ),
     );
   }

@@ -4,13 +4,121 @@ import 'package:shiftly/models/expense.dart';
 import 'package:shiftly/models/job_type.dart';
 import 'package:shiftly/models/shift.dart';
 import 'package:shiftly/models/shift_filter.dart';
+import 'package:shiftly/services/api_service.dart';
 import 'package:shiftly/services/notification_service.dart';
 import 'package:shiftly/services/persistence_service.dart';
 
 class ShiftProvider with ChangeNotifier {
   final PersistenceService _persistence;
+  final ApiService _apiService = ApiService();
+  String? _authToken;
 
   ShiftProvider(this._persistence);
+
+  void updateAuthToken(String? token) {
+    _authToken = token;
+    if (token != null) {
+      syncWithServer();
+    }
+  }
+
+  Future<void> syncWithServer() async {
+    if (_authToken == null) return;
+    try {
+      // 1. Sync Job Types
+      final remoteJobTypes = await _apiService.getJobTypes(_authToken!);
+      for (var jobData in remoteJobTypes) {
+        final job = JobType(
+          id: jobData['id'],
+          name: jobData['name'],
+          hourlyRate: double.parse(jobData['hourly_rate'].toString()),
+          // TODO: handle wageHistory parsing if needed
+        );
+        await _persistence.jobTypesBox.put(job.id, job);
+      }
+      for (var job in jobTypes) {
+        await _syncJobTypeToServer(job);
+      }
+
+      // 2. Sync Expenses
+      final remoteExpenses = await _apiService.getExpenses(_authToken!);
+      for (var expData in remoteExpenses) {
+        final exp = Expense(
+          id: expData['id'],
+          date: DateTime.parse(expData['date']),
+          description: expData['description'],
+          amount: double.parse(expData['amount'].toString()),
+        );
+        await _persistence.expensesBox.put(exp.id, exp);
+      }
+      for (var exp in expenses) {
+        await _syncExpenseToServer(exp);
+      }
+
+      // 3. Sync Shifts
+      final remoteShifts = await _apiService.getShifts(_authToken!);
+      for (var shiftData in remoteShifts) {
+        final shift = Shift(
+          id: shiftData['id'],
+          date: DateTime.parse(shiftData['date']),
+          startTime: DateTime.parse(shiftData['start_time']),
+          endTime: DateTime.parse(shiftData['end_time']),
+          jobTypeId: shiftData['job_type_id'],
+          tips: double.parse(shiftData['tips'].toString()),
+          hourlyRate: double.parse(shiftData['hourly_rate'].toString()),
+          unpaidBreakMinutes: double.parse(shiftData['unpaid_break_minutes']?.toString() ?? '0'),
+        );
+        await _persistence.shiftsBox.put(shift.id, shift);
+      }
+
+      for (var shift in shifts) {
+        await _syncShiftToServer(shift);
+      }
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Sync failed: $e');
+    }
+  }
+
+  Future<void> _syncJobTypeToServer(JobType job) async {
+    if (_authToken == null) return;
+    await _apiService.upsertJobType(_authToken!, {
+      'id': job.id,
+      'name': job.name,
+      'hourly_rate': job.hourlyRate,
+      'wage_history': job.wageHistory?.map((e) => {'startDate': e.startDate.toIso8601String(), 'hourlyRate': e.hourlyRate}).toList(),
+    });
+  }
+
+  Future<void> _syncExpenseToServer(Expense expense) async {
+    if (_authToken == null) return;
+    await _apiService.upsertExpense(_authToken!, {
+      'id': expense.id,
+      'date': expense.date.toIso8601String().split('T')[0],
+      'description': expense.description,
+      'amount': expense.amount,
+    });
+  }
+
+  Future<void> _syncShiftToServer(Shift shift) async {
+    if (_authToken == null) return;
+    final job = getJobTypeById(shift.jobTypeId);
+    final rate = shift.hourlyRate ?? job?.getRateForDate(shift.date) ?? 0.0;
+    
+    await _apiService.upsertShift(_authToken!, {
+      'id': shift.id,
+      'job_type_id': shift.jobTypeId,
+      'date': shift.date.toIso8601String().split('T')[0],
+      'start_time': shift.startTime.toIso8601String(),
+      'end_time': shift.endTime.toIso8601String(),
+      'tips': shift.tips,
+      'break_type': shift.breakType?.toString().split('.').last,
+      'unpaid_break_minutes': shift.unpaidBreakMinutes,
+      'hourly_rate': rate,
+      'automatic_expenses': shift.automaticExpenses?.map((e) => {'description': e.description, 'amount': e.amount}).toList(),
+      'total_pay': shift.calculateTotalPay(rate),
+    });
+  }
 
   ShiftFilter? _activeFilter;
 
@@ -98,18 +206,23 @@ class ShiftProvider with ChangeNotifier {
   Future<void> addShift(Shift shift, {Map<String, String>? l10n}) async {
     await _persistence.shiftsBox.put(shift.id, shift);
     _scheduleReminder(shift, l10n: l10n);
+    _syncShiftToServer(shift);
     notifyListeners();
   }
 
   Future<void> updateShift(Shift shift, {Map<String, String>? l10n}) async {
     await shift.save();
     _scheduleReminder(shift, l10n: l10n);
+    _syncShiftToServer(shift);
     notifyListeners();
   }
 
   Future<void> deleteShift(String id) async {
     await _persistence.shiftsBox.delete(id);
     NotificationService.cancelNotification(id.hashCode);
+    if (_authToken != null) {
+      await _apiService.deleteShift(_authToken!, id);
+    }
     notifyListeners();
   }
 
@@ -149,21 +262,27 @@ class ShiftProvider with ChangeNotifier {
   // Expense Methods
   Future<void> addExpense(Expense expense) async {
     await _persistence.expensesBox.put(expense.id, expense);
+    _syncExpenseToServer(expense);
     notifyListeners();
   }
 
   Future<void> updateExpense(Expense expense) async {
     await expense.save();
+    _syncExpenseToServer(expense);
     notifyListeners();
   }
 
   Future<void> deleteExpense(String id) async {
     await _persistence.expensesBox.delete(id);
+    if (_authToken != null) {
+      await _apiService.deleteExpense(_authToken!, id);
+    }
     notifyListeners();
   }
 
   Future<void> addJobType(JobType jobType) async {
     await _persistence.jobTypesBox.put(jobType.id, jobType);
+    _syncJobTypeToServer(jobType);
     notifyListeners();
   }
 
@@ -173,8 +292,17 @@ class ShiftProvider with ChangeNotifier {
     } else {
       await _persistence.jobTypesBox.put(jobType.id, jobType);
     }
+    _syncJobTypeToServer(jobType);
     // Keep shift snapshots in sync with the updated wage history
     await _resyncShiftRatesForJob(jobType);
+    notifyListeners();
+  }
+
+  Future<void> deleteJobType(String id) async {
+    await _persistence.jobTypesBox.delete(id);
+    if (_authToken != null) {
+      await _apiService.deleteJobType(_authToken!, id);
+    }
     notifyListeners();
   }
 
@@ -190,11 +318,6 @@ class ShiftProvider with ChangeNotifier {
         await shift.save();
       }
     }
-  }
-
-  Future<void> deleteJobType(String id) async {
-    await _persistence.jobTypesBox.delete(id);
-    notifyListeners();
   }
 
   JobType? getJobTypeById(String id) {

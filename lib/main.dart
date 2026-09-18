@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
 import 'package:shiftly/l10n/app_localizations.dart';
+import 'package:shiftly/providers/auth_provider.dart';
 import 'package:shiftly/providers/settings_provider.dart';
 import 'package:shiftly/providers/shift_provider.dart';
 import 'package:shiftly/providers/timer_provider.dart';
@@ -36,7 +37,11 @@ void main() async {
             create: (_) => SettingsProvider(persistenceService),
           ),
           ChangeNotifierProvider(
+            create: (_) => AuthProvider(persistenceService),
+          ),
+          ChangeNotifierProxyProvider<AuthProvider, ShiftProvider>(
             create: (_) => ShiftProvider(persistenceService),
+            update: (_, auth, shift) => shift!..updateAuthToken(auth.token),
           ),
           ChangeNotifierProvider(
             create: (_) => TimerProvider(persistenceService),

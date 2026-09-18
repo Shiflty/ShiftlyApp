@@ -23,6 +23,7 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final shiftProvider = context.watch<ShiftProvider>();
     final timerProvider = context.watch<TimerProvider>();
+    final auth = context.watch<AuthProvider>();
     final l = AppLocalizations.of(context)!;
     final groupedShifts = shiftProvider.shiftsGroupedByMonth;
 
@@ -84,12 +85,25 @@ class HomeScreen extends StatelessWidget {
             ),
           ],
         ),
-        title: Text(
-          l.common_app_name,
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-            letterSpacing: -0.5,
-          ),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text(
+              l.common_app_name,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+                letterSpacing: -0.5,
+              ),
+            ),
+            if (auth.userName != null)
+              Text(
+                l.home_welcome_back.replaceFirst('[[name]]', auth.userName!),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppTheme.primary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+          ],
         ),
         actions: [
           IconButton(

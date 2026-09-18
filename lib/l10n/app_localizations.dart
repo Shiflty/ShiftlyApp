@@ -1477,6 +1477,120 @@ abstract class AppLocalizations {
   /// In he, this message translates to:
   /// **'נסה לשנות את המסננים כדי לראות תוצאות'**
   String get filter_empty_state_subtitle;
+
+  /// No description provided for @auth_login_title.
+  ///
+  /// In he, this message translates to:
+  /// **'ברוכים השבים'**
+  String get auth_login_title;
+
+  /// No description provided for @auth_register_title.
+  ///
+  /// In he, this message translates to:
+  /// **'יצירת חשבון חדש'**
+  String get auth_register_title;
+
+  /// No description provided for @auth_full_name_label.
+  ///
+  /// In he, this message translates to:
+  /// **'שם מלא'**
+  String get auth_full_name_label;
+
+  /// No description provided for @auth_email_label.
+  ///
+  /// In he, this message translates to:
+  /// **'אימייל'**
+  String get auth_email_label;
+
+  /// No description provided for @auth_password_label.
+  ///
+  /// In he, this message translates to:
+  /// **'סיסמה'**
+  String get auth_password_label;
+
+  /// No description provided for @auth_error_name_empty.
+  ///
+  /// In he, this message translates to:
+  /// **'נא להזין שם'**
+  String get auth_error_name_empty;
+
+  /// No description provided for @auth_error_email_invalid.
+  ///
+  /// In he, this message translates to:
+  /// **'אימייל לא תקין'**
+  String get auth_error_email_invalid;
+
+  /// No description provided for @auth_error_password_length.
+  ///
+  /// In he, this message translates to:
+  /// **'סיסמה חייבת להיות לפחות 6 תווים'**
+  String get auth_error_password_length;
+
+  /// No description provided for @auth_login_button.
+  ///
+  /// In he, this message translates to:
+  /// **'התחברות'**
+  String get auth_login_button;
+
+  /// No description provided for @auth_register_button.
+  ///
+  /// In he, this message translates to:
+  /// **'הרשמה'**
+  String get auth_register_button;
+
+  /// No description provided for @auth_no_account_link.
+  ///
+  /// In he, this message translates to:
+  /// **'אין לך חשבון? הירשם עכשיו'**
+  String get auth_no_account_link;
+
+  /// No description provided for @auth_has_account_link.
+  ///
+  /// In he, this message translates to:
+  /// **'כבר יש לך חשבון? התחבר'**
+  String get auth_has_account_link;
+
+  /// No description provided for @auth_error_generic.
+  ///
+  /// In he, this message translates to:
+  /// **'שגיאה בביצוע הפעולה. נא לנסות שוב.'**
+  String get auth_error_generic;
+
+  /// No description provided for @settings_section_account.
+  ///
+  /// In he, this message translates to:
+  /// **'חשבון'**
+  String get settings_section_account;
+
+  /// No description provided for @settings_logout_title.
+  ///
+  /// In he, this message translates to:
+  /// **'התנתקות מהמערכת'**
+  String get settings_logout_title;
+
+  /// No description provided for @settings_logout_subtitle.
+  ///
+  /// In he, this message translates to:
+  /// **'התנתקות מהחשבון הנוכחי'**
+  String get settings_logout_subtitle;
+
+  /// No description provided for @settings_logout_dialog_title.
+  ///
+  /// In he, this message translates to:
+  /// **'התנתקות'**
+  String get settings_logout_dialog_title;
+
+  /// No description provided for @settings_logout_confirm_content.
+  ///
+  /// In he, this message translates to:
+  /// **'האם אתה בטוח שברצונך להתנתק?'**
+  String get settings_logout_confirm_content;
+
+  /// No description provided for @settings_logout_confirm_button.
+  ///
+  /// In he, this message translates to:
+  /// **'התנתק'**
+  String get settings_logout_confirm_button;
 }
 
 class _AppLocalizationsDelegate
