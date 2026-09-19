@@ -87,6 +87,21 @@ app.put('/api/auth/profile', authenticateToken, async (req, res) => {
   }
 });
 
+// Update User Profile
+app.put('/api/auth/profile', authenticateToken, async (req, res) => {
+  const { name, email } = req.body;
+  try {
+    const result = await pool.query(
+      'UPDATE users SET name = $1, email = $2 WHERE id = $3 RETURNING id, name, email',
+      [name, email, req.user.userId]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to update profile' });
+  }
+});
+
 // Health check
 app.get('/health', (req, res) => res.send('OK'));
 

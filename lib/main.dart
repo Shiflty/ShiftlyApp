@@ -15,6 +15,7 @@ import 'package:shiftly/theme/app_theme.dart';
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
+  // Restarting analyzer
   WidgetsFlutterBinding.ensureInitialized();
 
   try {
@@ -41,7 +42,8 @@ void main() async {
           ),
           ChangeNotifierProxyProvider<AuthProvider, ShiftProvider>(
             create: (_) => ShiftProvider(persistenceService),
-            update: (_, auth, shift) => shift!..updateAuthToken(auth.token),
+            update: (_, auth, shift) => shift!
+              ..updateAuthStatus(auth.token, auth.authType == AuthType.byos),
           ),
           ChangeNotifierProvider(
             create: (_) => TimerProvider(persistenceService),
@@ -64,10 +66,7 @@ void main() async {
         locale: Locale('he', 'IL'),
         home: Scaffold(
           body: Center(
-            child: Directionality(
-              textDirection: TextDirection.rtl,
-              child: Text('שגיאה בעליית האפליקציה. נא לנסות שוב.'),
-            ),
+            child: Text('Critical Error during app startup. Please restart.'),
           ),
         ),
       ),

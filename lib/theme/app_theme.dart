@@ -351,8 +351,16 @@ class AppTheme {
 
   static IconData iconForJobName(String? name) {
     if (name == null) return Icons.work_outline_rounded;
-    if (name.contains('מזנון')) return Icons.restaurant_rounded;
-    if (name.contains('סדרן')) return Icons.confirmation_number_outlined;
+    final lowerName = name.toLowerCase();
+    if (lowerName.contains('מזנון') || lowerName.contains('buffet')) {
+      return Icons.restaurant_rounded;
+    }
+    if (lowerName.contains('סדרן') || lowerName.contains('steward')) {
+      return Icons.confirmation_number_outlined;
+    }
+    if (lowerName.contains('פריקה') || lowerName.contains('unloading')) {
+      return Icons.local_shipping_outlined;
+    }
     return Icons.work_outline_rounded;
   }
 }

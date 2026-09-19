@@ -74,12 +74,15 @@ class JobType extends HiveObject {
     'id': id,
     'name': name,
     'hourlyRate': hourlyRate,
-    // Note: complex types like wageHistory might need specific handling in JSON if used
+    'wageHistory': wageHistory?.map((e) => e.toJson()).toList(),
   };
 
   factory JobType.fromJson(Map<String, dynamic> json) => JobType(
     id: json['id'],
     name: json['name'],
-    hourlyRate: json['hourlyRate'],
+    hourlyRate: json['hourlyRate'].toDouble(),
+    wageHistory: (json['wageHistory'] as List?)
+        ?.map((e) => WageEntry.fromJson(e))
+        .toList(),
   );
 }

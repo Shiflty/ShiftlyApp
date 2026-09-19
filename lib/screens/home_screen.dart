@@ -6,6 +6,7 @@ import 'package:shiftly/models/break_type.dart';
 import 'package:shiftly/models/job_type.dart';
 import 'package:shiftly/models/shift.dart';
 import 'package:shiftly/models/shift_filter.dart';
+import 'package:shiftly/providers/auth_provider.dart';
 import 'package:shiftly/providers/settings_provider.dart';
 import 'package:shiftly/providers/shift_provider.dart';
 import 'package:shiftly/providers/timer_provider.dart';
@@ -95,7 +96,7 @@ class HomeScreen extends StatelessWidget {
                 letterSpacing: -0.5,
               ),
             ),
-            if (auth.userName != null)
+            if (auth.isLoggedIn && auth.userName != null)
               Text(
                 l.home_welcome_back.replaceFirst('[[name]]', auth.userName!),
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(

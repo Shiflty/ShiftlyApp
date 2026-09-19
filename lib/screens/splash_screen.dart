@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shiftly/l10n/app_localizations.dart';
-import 'package:shiftly/providers/auth_provider.dart';
 import 'package:shiftly/providers/settings_provider.dart';
-import 'package:shiftly/screens/auth_screen.dart';
 import 'package:shiftly/screens/home_screen.dart';
 import 'package:shiftly/screens/onboarding_screen.dart';
 import 'package:shiftly/widgets/app_icon.dart';
@@ -53,17 +51,10 @@ class _SplashScreenState extends State<SplashScreen>
     await Future.delayed(const Duration(seconds: 3));
     if (!mounted) return;
 
-    final auth = context.read<AuthProvider>();
     final settings = context.read<SettingsProvider>();
-
-    Widget nextScreen;
-    if (!auth.isLoggedIn) {
-      nextScreen = const AuthScreen();
-    } else {
-      nextScreen = settings.hasCompletedOnboarding
-          ? const HomeScreen()
-          : const OnboardingScreen();
-    }
+    final Widget nextScreen = settings.hasCompletedOnboarding
+        ? const HomeScreen()
+        : const OnboardingScreen();
 
     if (!mounted) return;
     Navigator.pushReplacement(

@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shiftly/l10n/app_localizations.dart';
 import 'package:shiftly/providers/auth_provider.dart';
-import 'package:shiftly/providers/settings_provider.dart';
-import 'package:shiftly/screens/home_screen.dart';
-import 'package:shiftly/screens/onboarding_screen.dart';
+import 'package:shiftly/providers/shift_provider.dart';
+import 'package:shiftly/services/api_service.dart';
 import 'package:shiftly/utils/ui_utils.dart';
 import 'package:shiftly/widgets/app_icon.dart';
+
+import '../providers/settings_provider.dart';
 
 enum AuthMode { login, register }
 
@@ -49,7 +50,8 @@ class _AuthScreenState extends State<AuthScreen> {
 
     try {
       final authProvider = context.read<AuthProvider>();
-      final settingsProvider = context.read<SettingsProvider>();
+      final shiftProvider = context.read<ShiftProvider>();
+      final l = AppLocalizations.of(context)!;
 
       if (_authMode == AuthMode.login) {
         await authProvider.login(
@@ -66,26 +68,48 @@ class _AuthScreenState extends State<AuthScreen> {
 
       if (!mounted) return;
 
-      final l2 = AppLocalizations.of(context)!;
-      UIUtils.showSnackBar(context, _authMode == AuthMode.login ? l2.auth_login_success : l2.auth_register_success);
+      // Check for sync conflict
+      final remoteShifts = await ApiService().getShifts(authProvider.token!);
+      bool? keepLocal;
 
-      // ניתוב לאחר התחברות/הרשמה
-      final nextScreen = settingsProvider.hasCompletedOnboarding
-          ? const HomeScreen()
-          : const OnboardingScreen();
+      if (remoteShifts.isNotEmpty && shiftProvider.shifts.isNotEmpty) {
+        if (mounted) {
+          keepLocal = await showDialog<bool>(
+            context: context,
+            barrierDismissible: false,
+            builder: (ctx) => AlertDialog(
+              title: Text(l.auth_sync_dialog_title),
+              content: Text(l.auth_sync_dialog_content),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx, false),
+                  child: Text(l.auth_sync_dialog_cloud),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(ctx, true),
+                  child: Text(l.auth_sync_dialog_local),
+                ),
+              ],
+            ),
+          );
+        }
+      }
 
-      Navigator.pushReplacement(
+      await shiftProvider.syncWithServer(keepLocal: keepLocal);
+
+      if (!mounted) return;
+      UIUtils.showSnackBar(
         context,
-        MaterialPageRoute(builder: (context) => nextScreen),
+        _authMode == AuthMode.login
+            ? l.auth_login_success
+            : l.auth_register_success,
       );
+
+      Navigator.pop(context); // Return to settings
     } catch (e) {
       if (mounted) {
         final l = AppLocalizations.of(context)!;
-        UIUtils.showSnackBar(
-          context,
-          l.auth_error_generic,
-          isError: true,
-        );
+        UIUtils.showSnackBar(context, l.auth_error_generic, isError: true);
       }
     } finally {
       if (mounted) {
@@ -139,8 +163,9 @@ class _AuthScreenState extends State<AuthScreen> {
                         label: l.auth_full_name_label,
                         icon: Icons.person_outline,
                       ),
-                      validator: (value) =>
-                          value == null || value.isEmpty ? l.auth_error_name_empty : null,
+                      validator: (value) => value == null || value.isEmpty
+                          ? l.auth_error_name_empty
+                          : null,
                     ),
                     const SizedBox(height: 16),
                   ],
@@ -191,7 +216,9 @@ class _AuthScreenState extends State<AuthScreen> {
                       child: _isLoading
                           ? const CircularProgressIndicator(color: Colors.white)
                           : Text(
-                              isLogin ? l.auth_login_button : l.auth_register_button,
+                              isLogin
+                                  ? l.auth_login_button
+                                  : l.auth_register_button,
                               style: const TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,

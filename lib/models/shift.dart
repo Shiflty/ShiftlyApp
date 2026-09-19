@@ -58,6 +58,36 @@ class Shift extends HiveObject {
     this.automaticExpenses,
   });
 
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'date': date.toIso8601String(),
+    'startTime': startTime.toIso8601String(),
+    'endTime': endTime.toIso8601String(),
+    'jobTypeId': jobTypeId,
+    'tips': tips,
+    'breakType': breakType?.toString(),
+    'unpaidBreakMinutes': unpaidBreakMinutes,
+    'hourlyRate': hourlyRate,
+    'automaticExpenses': automaticExpenses?.map((e) => e.toJson()).toList(),
+  };
+
+  factory Shift.fromJson(Map<String, dynamic> json) => Shift(
+    id: json['id'],
+    date: DateTime.parse(json['date']),
+    startTime: DateTime.parse(json['startTime']),
+    endTime: DateTime.parse(json['endTime']),
+    jobTypeId: json['jobTypeId'],
+    tips: json['tips']?.toDouble() ?? 0.0,
+    breakType: json['breakType'] != null
+        ? BreakType.values.firstWhere((e) => e.toString() == json['breakType'])
+        : BreakType.none,
+    unpaidBreakMinutes: json['unpaidBreakMinutes']?.toDouble(),
+    hourlyRate: json['hourlyRate']?.toDouble(),
+    automaticExpenses: (json['automaticExpenses'] as List?)
+        ?.map((e) => AutomaticExpense.fromJson(e))
+        .toList(),
+  );
+
   double get totalAutomaticExpenses {
     double total = automaticExpense ?? 0.0;
     if (automaticExpenses != null) {

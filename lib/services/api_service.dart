@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
@@ -12,7 +13,7 @@ class ApiService {
     } catch (e) {
       // Platform.isAndroid might throw on web, but kIsWeb handles it
     }
-    return 'http://localhost:3000/api'; // עבור Windows, iOS simulator וכו'
+    return 'http://localhost:3000/api'; // For Windows, iOS simulator, etc.
   }
 
   Future<Map<String, dynamic>> login(String email, String password) async {
@@ -49,7 +50,11 @@ class ApiService {
     }
   }
 
-  Future<Map<String, dynamic>> updateProfile(String token, String name, String email) async {
+  Future<Map<String, dynamic>> updateProfile(
+    String token,
+    String name,
+    String email,
+  ) async {
     final response = await http.put(
       Uri.parse('$_baseUrl/auth/profile'),
       headers: {
@@ -62,7 +67,9 @@ class ApiService {
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     } else {
-      throw Exception(jsonDecode(response.body)['error'] ?? 'Failed to update profile');
+      throw Exception(
+        jsonDecode(response.body)['error'] ?? 'Failed to update profile',
+      );
     }
   }
 

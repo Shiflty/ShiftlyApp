@@ -11,4 +11,14 @@ class WageEntry extends HiveObject {
   double hourlyRate;
 
   WageEntry({required this.startDate, required this.hourlyRate});
+
+  Map<String, dynamic> toJson() => {
+    'startDate': startDate.toIso8601String(),
+    'hourlyRate': hourlyRate,
+  };
+
+  factory WageEntry.fromJson(Map<String, dynamic> json) => WageEntry(
+    startDate: DateTime.parse(json['startDate']),
+    hourlyRate: json['hourlyRate'].toDouble(),
+  );
 }

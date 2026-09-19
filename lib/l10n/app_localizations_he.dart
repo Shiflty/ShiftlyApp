@@ -784,4 +784,101 @@ class AppLocalizationsHe extends AppLocalizations {
 
   @override
   String get settings_logout_confirm_button => 'התנתק';
+
+  @override
+  String get auth_login_success => 'התחברת בהצלחה';
+
+  @override
+  String get auth_register_success => 'החשבון נוצר בהצלחה';
+
+  @override
+  String get home_welcome_back => 'שלום, [[name]]';
+
+  @override
+  String get settings_user_details_title => 'פרטי משתמש';
+
+  @override
+  String get settings_user_name => 'שם';
+
+  @override
+  String get settings_user_email => 'אימייל';
+
+  @override
+  String get settings_user_password => 'סיסמה';
+
+  @override
+  String get settings_user_edit_title => 'עריכת פרופיל';
+
+  @override
+  String get settings_user_update_button => 'עדכן פרטים';
+
+  @override
+  String get settings_user_update_success => 'הפרטים עודכנו בהצלחה';
+
+  @override
+  String get settings_logout_success => 'התנתקת בהצלחה';
+
+  @override
+  String get settings_byos_title => 'סנכרון BYOS';
+
+  @override
+  String get settings_byos_connected => 'מחובר ל-Google Drive';
+
+  @override
+  String get settings_byos_last_backup => 'גיבוי אחרון: [[time]]';
+
+  @override
+  String get settings_byos_disconnect => 'נתק';
+
+  @override
+  String get settings_byos_upgrade_title => 'צור חשבון Shiftly';
+
+  @override
+  String get settings_byos_upgrade_subtitle =>
+      'העבר את נתוני ה-BYOS לענן שלנו לסנכרון מהיר יותר';
+
+  @override
+  String get settings_byos_sync_backup_section => 'סנכרון וגיבוי';
+
+  @override
+  String get settings_byos_login_shiftly => 'התחבר לחשבון Shiftly';
+
+  @override
+  String get settings_byos_login_shiftly_sub => 'סנכרון מלא בענן שלנו';
+
+  @override
+  String get settings_byos_method_title => 'שיטת BYOS (Google Drive)';
+
+  @override
+  String get settings_byos_method_sub => 'גיבוי לענן הפרטי שלך';
+
+  @override
+  String get settings_byos_restore_dialog_title => 'סנכרון BYOS';
+
+  @override
+  String get settings_byos_restore_dialog_content =>
+      'האם תרצה לשחזר נתונים קיימים מה-Google Drive שלך?';
+
+  @override
+  String get settings_byos_restore_confirm => 'שחזר';
+
+  @override
+  String get settings_byos_restore_cancel => 'לא כרגע';
+
+  @override
+  String get settings_byos_login_hint =>
+      'התחבר כדי לגבות את הנתונים לענן ולהשתמש במכשירים נוספים';
+
+  @override
+  String get auth_sync_dialog_title => 'סנכרון נתונים';
+
+  @override
+  String get auth_sync_dialog_content =>
+      'נמצאו נתונים קיימים גם במכשיר וגם בענן. באילו נתונים תרצה להשתמש?\n\n• שמירת נתוני המכשיר תעלה אותם לענן.\n• שימוש בנתוני ענן ימחק את המידע הקיים במכשיר.';
+
+  @override
+  String get auth_sync_dialog_cloud => 'נתוני ענן';
+
+  @override
+  String get auth_sync_dialog_local => 'נתוני מכשיר';
 }

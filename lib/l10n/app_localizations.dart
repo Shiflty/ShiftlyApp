@@ -1591,6 +1591,192 @@ abstract class AppLocalizations {
   /// In he, this message translates to:
   /// **'התנתק'**
   String get settings_logout_confirm_button;
+
+  /// No description provided for @auth_login_success.
+  ///
+  /// In he, this message translates to:
+  /// **'התחברת בהצלחה'**
+  String get auth_login_success;
+
+  /// No description provided for @auth_register_success.
+  ///
+  /// In he, this message translates to:
+  /// **'החשבון נוצר בהצלחה'**
+  String get auth_register_success;
+
+  /// No description provided for @home_welcome_back.
+  ///
+  /// In he, this message translates to:
+  /// **'שלום, [[name]]'**
+  String get home_welcome_back;
+
+  /// No description provided for @settings_user_details_title.
+  ///
+  /// In he, this message translates to:
+  /// **'פרטי משתמש'**
+  String get settings_user_details_title;
+
+  /// No description provided for @settings_user_name.
+  ///
+  /// In he, this message translates to:
+  /// **'שם'**
+  String get settings_user_name;
+
+  /// No description provided for @settings_user_email.
+  ///
+  /// In he, this message translates to:
+  /// **'אימייל'**
+  String get settings_user_email;
+
+  /// No description provided for @settings_user_password.
+  ///
+  /// In he, this message translates to:
+  /// **'סיסמה'**
+  String get settings_user_password;
+
+  /// No description provided for @settings_user_edit_title.
+  ///
+  /// In he, this message translates to:
+  /// **'עריכת פרופיל'**
+  String get settings_user_edit_title;
+
+  /// No description provided for @settings_user_update_button.
+  ///
+  /// In he, this message translates to:
+  /// **'עדכן פרטים'**
+  String get settings_user_update_button;
+
+  /// No description provided for @settings_user_update_success.
+  ///
+  /// In he, this message translates to:
+  /// **'הפרטים עודכנו בהצלחה'**
+  String get settings_user_update_success;
+
+  /// No description provided for @settings_logout_success.
+  ///
+  /// In he, this message translates to:
+  /// **'התנתקת בהצלחה'**
+  String get settings_logout_success;
+
+  /// No description provided for @settings_byos_title.
+  ///
+  /// In he, this message translates to:
+  /// **'סנכרון BYOS'**
+  String get settings_byos_title;
+
+  /// No description provided for @settings_byos_connected.
+  ///
+  /// In he, this message translates to:
+  /// **'מחובר ל-Google Drive'**
+  String get settings_byos_connected;
+
+  /// No description provided for @settings_byos_last_backup.
+  ///
+  /// In he, this message translates to:
+  /// **'גיבוי אחרון: [[time]]'**
+  String get settings_byos_last_backup;
+
+  /// No description provided for @settings_byos_disconnect.
+  ///
+  /// In he, this message translates to:
+  /// **'נתק'**
+  String get settings_byos_disconnect;
+
+  /// No description provided for @settings_byos_upgrade_title.
+  ///
+  /// In he, this message translates to:
+  /// **'צור חשבון Shiftly'**
+  String get settings_byos_upgrade_title;
+
+  /// No description provided for @settings_byos_upgrade_subtitle.
+  ///
+  /// In he, this message translates to:
+  /// **'העבר את נתוני ה-BYOS לענן שלנו לסנכרון מהיר יותר'**
+  String get settings_byos_upgrade_subtitle;
+
+  /// No description provided for @settings_byos_sync_backup_section.
+  ///
+  /// In he, this message translates to:
+  /// **'סנכרון וגיבוי'**
+  String get settings_byos_sync_backup_section;
+
+  /// No description provided for @settings_byos_login_shiftly.
+  ///
+  /// In he, this message translates to:
+  /// **'התחבר לחשבון Shiftly'**
+  String get settings_byos_login_shiftly;
+
+  /// No description provided for @settings_byos_login_shiftly_sub.
+  ///
+  /// In he, this message translates to:
+  /// **'סנכרון מלא בענן שלנו'**
+  String get settings_byos_login_shiftly_sub;
+
+  /// No description provided for @settings_byos_method_title.
+  ///
+  /// In he, this message translates to:
+  /// **'שיטת BYOS (Google Drive)'**
+  String get settings_byos_method_title;
+
+  /// No description provided for @settings_byos_method_sub.
+  ///
+  /// In he, this message translates to:
+  /// **'גיבוי לענן הפרטי שלך'**
+  String get settings_byos_method_sub;
+
+  /// No description provided for @settings_byos_restore_dialog_title.
+  ///
+  /// In he, this message translates to:
+  /// **'סנכרון BYOS'**
+  String get settings_byos_restore_dialog_title;
+
+  /// No description provided for @settings_byos_restore_dialog_content.
+  ///
+  /// In he, this message translates to:
+  /// **'האם תרצה לשחזר נתונים קיימים מה-Google Drive שלך?'**
+  String get settings_byos_restore_dialog_content;
+
+  /// No description provided for @settings_byos_restore_confirm.
+  ///
+  /// In he, this message translates to:
+  /// **'שחזר'**
+  String get settings_byos_restore_confirm;
+
+  /// No description provided for @settings_byos_restore_cancel.
+  ///
+  /// In he, this message translates to:
+  /// **'לא כרגע'**
+  String get settings_byos_restore_cancel;
+
+  /// No description provided for @settings_byos_login_hint.
+  ///
+  /// In he, this message translates to:
+  /// **'התחבר כדי לגבות את הנתונים לענן ולהשתמש במכשירים נוספים'**
+  String get settings_byos_login_hint;
+
+  /// No description provided for @auth_sync_dialog_title.
+  ///
+  /// In he, this message translates to:
+  /// **'סנכרון נתונים'**
+  String get auth_sync_dialog_title;
+
+  /// No description provided for @auth_sync_dialog_content.
+  ///
+  /// In he, this message translates to:
+  /// **'נמצאו נתונים קיימים גם במכשיר וגם בענן. באילו נתונים תרצה להשתמש?\n\n• שמירת נתוני המכשיר תעלה אותם לענן.\n• שימוש בנתוני ענן ימחק את המידע הקיים במכשיר.'**
+  String get auth_sync_dialog_content;
+
+  /// No description provided for @auth_sync_dialog_cloud.
+  ///
+  /// In he, this message translates to:
+  /// **'נתוני ענן'**
+  String get auth_sync_dialog_cloud;
+
+  /// No description provided for @auth_sync_dialog_local.
+  ///
+  /// In he, this message translates to:
+  /// **'נתוני מכשיר'**
+  String get auth_sync_dialog_local;
 }
 
 class _AppLocalizationsDelegate

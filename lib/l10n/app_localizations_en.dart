@@ -790,4 +790,101 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settings_logout_confirm_button => 'Logout';
+
+  @override
+  String get auth_login_success => 'Login successful';
+
+  @override
+  String get auth_register_success => 'Account created successfully';
+
+  @override
+  String get home_welcome_back => 'Hello, [[name]]';
+
+  @override
+  String get settings_user_details_title => 'User Details';
+
+  @override
+  String get settings_user_name => 'Name';
+
+  @override
+  String get settings_user_email => 'Email';
+
+  @override
+  String get settings_user_password => 'Password';
+
+  @override
+  String get settings_user_edit_title => 'Edit Profile';
+
+  @override
+  String get settings_user_update_button => 'Update Details';
+
+  @override
+  String get settings_user_update_success => 'Profile updated successfully';
+
+  @override
+  String get settings_logout_success => 'Logged out successfully';
+
+  @override
+  String get settings_byos_title => 'BYOS Sync';
+
+  @override
+  String get settings_byos_connected => 'Connected to Google Drive';
+
+  @override
+  String get settings_byos_last_backup => 'Last backup: [[time]]';
+
+  @override
+  String get settings_byos_disconnect => 'Disconnect';
+
+  @override
+  String get settings_byos_upgrade_title => 'Create Shiftly Account';
+
+  @override
+  String get settings_byos_upgrade_subtitle =>
+      'Transfer BYOS data to our cloud for faster sync';
+
+  @override
+  String get settings_byos_sync_backup_section => 'Sync & Backup';
+
+  @override
+  String get settings_byos_login_shiftly => 'Login to Shiftly Account';
+
+  @override
+  String get settings_byos_login_shiftly_sub => 'Full sync in our cloud';
+
+  @override
+  String get settings_byos_method_title => 'BYOS Method (Google Drive)';
+
+  @override
+  String get settings_byos_method_sub => 'Backup to your private cloud';
+
+  @override
+  String get settings_byos_restore_dialog_title => 'BYOS Sync';
+
+  @override
+  String get settings_byos_restore_dialog_content =>
+      'Would you like to restore existing data from your Google Drive?';
+
+  @override
+  String get settings_byos_restore_confirm => 'Restore';
+
+  @override
+  String get settings_byos_restore_cancel => 'Not now';
+
+  @override
+  String get settings_byos_login_hint =>
+      'Login to backup data to cloud and use more devices';
+
+  @override
+  String get auth_sync_dialog_title => 'Data Sync';
+
+  @override
+  String get auth_sync_dialog_content =>
+      'Data was found both locally and in the cloud. Which one would you like to use?\n\n• Keeping local data will upload it to the cloud.\n• Using cloud data will overwrite local data.';
+
+  @override
+  String get auth_sync_dialog_cloud => 'Cloud Data';
+
+  @override
+  String get auth_sync_dialog_local => 'Local Data';
 }

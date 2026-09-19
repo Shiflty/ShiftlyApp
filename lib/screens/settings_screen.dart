@@ -280,29 +280,158 @@ class _SettingsScreenState extends State<SettingsScreen> {
             120, // Increased for ad space and system navigation
           ),
           children: [
-            _buildSectionHeader(context, l.settings_user_details_title),
-            const SizedBox(height: AppTheme.spaceXs),
-            Card(
-              child: Column(
-                children: [
-                  ListTile(
-                    leading: const Icon(Icons.person_outline_rounded, color: AppTheme.primaryDark),
-                    title: Text(l.settings_user_name),
-                    subtitle: Text(auth.userName ?? ''),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.edit_outlined, size: 20),
-                      onPressed: () => _showEditProfileDialog(context),
+            if (auth.isLoggedIn &&
+                auth.authType == AuthType.shiftlyAccount) ...[
+              _buildSectionHeader(context, l.settings_user_details_title),
+              const SizedBox(height: AppTheme.spaceXs),
+              Card(
+                child: Column(
+                  children: [
+                    ListTile(
+                      leading: const Icon(
+                        Icons.person_outline_rounded,
+                        color: AppTheme.primaryDark,
+                      ),
+                      title: Text(l.settings_user_name),
+                      subtitle: Text(auth.userName ?? ''),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.edit_outlined, size: 20),
+                        onPressed: () => _showEditProfileDialog(context),
+                      ),
                     ),
-                  ),
-                  const Divider(height: 1, indent: 56),
-                  ListTile(
-                    leading: const Icon(Icons.email_outlined, color: AppTheme.primaryDark),
-                    title: Text(l.settings_user_email),
-                    subtitle: Text(auth.userEmail ?? ''),
-                  ),
-                ],
+                    const Divider(height: 1, indent: 56),
+                    ListTile(
+                      leading: const Icon(
+                        Icons.email_outlined,
+                        color: AppTheme.primaryDark,
+                      ),
+                      title: Text(l.settings_user_email),
+                      subtitle: Text(auth.userEmail ?? ''),
+                    ),
+                  ],
+                ),
               ),
-            ),
+            ] else if (auth.isLoggedIn && auth.authType == AuthType.byos) ...[
+              _buildSectionHeader(context, l.settings_byos_title),
+              const SizedBox(height: AppTheme.spaceXs),
+              Card(
+                child: Column(
+                  children: [
+                    ListTile(
+                      leading: const Icon(
+                        Icons.cloud_done_rounded,
+                        color: Colors.green,
+                      ),
+                      title: Text(l.settings_byos_connected),
+                      subtitle: Text(auth.userEmail ?? ''),
+                      trailing: TextButton(
+                        onPressed: () => context.read<AuthProvider>().logout(),
+                        child: Text(l.settings_byos_disconnect),
+                      ),
+                    ),
+                    if (context.watch<ShiftProvider>().lastBackupTime != null)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 8,
+                              height: 8,
+                              decoration: const BoxDecoration(
+                                color: Colors.green,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              l.settings_byos_last_backup.replaceFirst(
+                                '[[time]]',
+                                DateFormat('HH:mm:ss').format(
+                                  context.read<ShiftProvider>().lastBackupTime!,
+                                ),
+                              ),
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppTheme.spaceSm),
+              Card(
+                child: ListTile(
+                  leading: const Icon(
+                    Icons.account_circle_rounded,
+                    color: AppTheme.primary,
+                  ),
+                  title: Text(l.settings_byos_upgrade_title),
+                  subtitle: Text(l.settings_byos_upgrade_subtitle),
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const AuthScreen()),
+                  ),
+                ),
+              ),
+            ] else ...[
+              _buildSectionHeader(context, l.settings_byos_sync_backup_section),
+              const SizedBox(height: AppTheme.spaceXs),
+              Card(
+                child: Column(
+                  children: [
+                    ListTile(
+                      leading: const Icon(
+                        Icons.cloud_sync_rounded,
+                        color: AppTheme.primary,
+                      ),
+                      title: Text(l.settings_byos_login_shiftly),
+                      subtitle: Text(l.settings_byos_login_shiftly_sub),
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const AuthScreen()),
+                      ),
+                    ),
+                    const Divider(height: 1, indent: 56),
+                    ListTile(
+                      leading: const Icon(
+                        Icons.storage_rounded,
+                        color: Colors.orange,
+                      ),
+                      title: Text(l.settings_byos_method_title),
+                      subtitle: Text(l.settings_byos_method_sub),
+                      onTap: () async {
+                        if (!kIsWeb && Platform.isWindows) {
+                          UIUtils.showSnackBar(
+                            context,
+                            'Google Sign In is not natively supported on Windows. Please test this feature on Android or iOS.',
+                            isError: true,
+                          );
+                          return;
+                        }
+                        await auth.connectBYOS();
+                        if (context.mounted && auth.authType == AuthType.byos) {
+                          final confirmed = await UIUtils.showConfirmDialog(
+                            context: context,
+                            title: l.settings_byos_restore_dialog_title,
+                            content: l.settings_byos_restore_dialog_content,
+                            confirmLabel: l.settings_byos_restore_confirm,
+                            cancelLabel: l.settings_byos_restore_cancel,
+                          );
+                          if (confirmed == true && context.mounted) {
+                            await context
+                                .read<ShiftProvider>()
+                                .restoreFromBYOS();
+                          }
+                        }
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: AppTheme.spaceLg),
             _buildSectionHeader(context, l.settings_section_app),
             const SizedBox(height: AppTheme.spaceXs),
@@ -589,43 +718,43 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   symbol: symbol,
                 ),
               ),
-            const SizedBox(height: AppTheme.spaceLg),
-            _buildSectionHeader(context, l.settings_section_account),
-            const SizedBox(height: AppTheme.spaceXs),
-            Card(
-              child: ListTile(
-                title: Text(
-                  l.settings_logout_title,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                subtitle: Text(l.settings_logout_subtitle),
-                leading: const Icon(
-                  Icons.logout_rounded,
-                  color: AppTheme.primaryDark,
-                ),
-                onTap: () async {
-                  final confirmed = await UIUtils.showConfirmDialog(
-                    context: context,
-                    title: l.settings_logout_dialog_title,
-                    content: l.settings_logout_confirm_content,
-                    confirmLabel: l.settings_logout_confirm_button,
-                    isDestructive: true,
-                  );
+            if (auth.isLoggedIn) ...[
+              const SizedBox(height: AppTheme.spaceLg),
+              _buildSectionHeader(context, l.settings_section_account),
+              const SizedBox(height: AppTheme.spaceXs),
+              Card(
+                child: ListTile(
+                  title: Text(
+                    l.settings_logout_title,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: Text(l.settings_logout_subtitle),
+                  leading: const Icon(
+                    Icons.logout_rounded,
+                    color: AppTheme.primaryDark,
+                  ),
+                  onTap: () async {
+                    final confirmed = await UIUtils.showConfirmDialog(
+                      context: context,
+                      title: l.settings_logout_dialog_title,
+                      content: l.settings_logout_confirm_content,
+                      confirmLabel: l.settings_logout_confirm_button,
+                      isDestructive: true,
+                    );
 
-                  if (confirmed == true && context.mounted) {
-                    await context.read<AuthProvider>().logout();
-                    if (context.mounted) {
-                      Navigator.of(context).pushAndRemoveUntil(
-                        MaterialPageRoute(
-                          builder: (context) => const AuthScreen(),
-                        ),
-                        (route) => false,
-                      );
+                    if (confirmed == true && context.mounted) {
+                      await context.read<AuthProvider>().logout();
+                      if (context.mounted) {
+                        UIUtils.showSnackBar(
+                          context,
+                          l.settings_logout_success,
+                        );
+                      }
                     }
-                  }
-                },
+                  },
+                ),
               ),
-            ),
+            ],
             const SizedBox(height: AppTheme.spaceLg),
             _buildSectionHeader(context, l.settings_section_danger),
             const SizedBox(height: AppTheme.spaceXs),
@@ -678,7 +807,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l.common_cancel)),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(l.common_cancel),
+          ),
           ElevatedButton(
             onPressed: () async {
               try {
@@ -691,7 +823,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   UIUtils.showSnackBar(context, l.settings_user_update_success);
                 }
               } catch (e) {
-                if (context.mounted) UIUtils.showSnackBar(context, l.common_error, isError: true);
+                if (context.mounted) {
+                  UIUtils.showSnackBar(context, l.common_error, isError: true);
+                }
               }
             },
             child: Text(l.common_save),

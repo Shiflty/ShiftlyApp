@@ -12,6 +12,17 @@ class AutomaticExpense extends HiveObject {
 
   AutomaticExpense({required this.description, required this.amount});
 
+  Map<String, dynamic> toJson() => {
+    'description': description,
+    'amount': amount,
+  };
+
+  factory AutomaticExpense.fromJson(Map<String, dynamic> json) =>
+      AutomaticExpense(
+        description: json['description'],
+        amount: json['amount'].toDouble(),
+      );
+
   AutomaticExpense copyWith({String? description, double? amount}) {
     return AutomaticExpense(
       description: description ?? this.description,

@@ -13,15 +13,15 @@ spec:
         app: backend
     spec:
       containers:
-      - name: backend
-        image: your-docker-hub-user/shiftly-backend:latest
-        ports:
-        - containerPort: 3000
-        env:
-        - name: DATABASE_URL
-          value: postgresql://postgres:postgres@db:5432/shiftly
-        - name: JWT_SECRET
-          value: production-secret-key-here
+        - name: backend
+          image: your-docker-hub-user/shiftly-backend:latest
+          ports:
+            - containerPort: 3000
+          env:
+            - name: DATABASE_URL
+              value: postgresql://postgres:postgres@db:5432/shiftly
+            - name: JWT_SECRET
+              value: production-secret-key-here
 ---
 apiVersion: v1
 kind: Service

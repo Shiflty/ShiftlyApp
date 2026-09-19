@@ -5,43 +5,109 @@ import 'package:shiftly/models/job_type.dart';
 import 'package:shiftly/models/shift.dart';
 import 'package:shiftly/models/shift_filter.dart';
 import 'package:shiftly/services/api_service.dart';
+import 'package:shiftly/services/google_drive_service.dart';
 import 'package:shiftly/services/notification_service.dart';
 import 'package:shiftly/services/persistence_service.dart';
 
 class ShiftProvider with ChangeNotifier {
   final PersistenceService _persistence;
   final ApiService _apiService = ApiService();
+  final GoogleDriveService _driveService = GoogleDriveService();
   String? _authToken;
+  bool _isBYOS = false;
 
   ShiftProvider(this._persistence);
 
-  void updateAuthToken(String? token) {
+  void updateAuthStatus(String? token, bool isBYOS) {
     _authToken = token;
-    if (token != null) {
-      syncWithServer();
+    final wasNotBYOS = !_isBYOS;
+    _isBYOS = isBYOS;
+
+    if (isBYOS && wasNotBYOS) {
+      _triggerBackup();
+      restoreFromBYOS(); // Automatic restore attempt on first connection
     }
   }
 
-  Future<void> syncWithServer() async {
+  DateTime? _lastBackupTime;
+
+  DateTime? get lastBackupTime => _lastBackupTime;
+
+  Future<void> _triggerBackup() async {
+    if (_isBYOS) {
+      try {
+        final data = {
+          'shifts': shifts.map((s) => s.toJson()).toList(),
+          'expenses': expenses.map((e) => e.toJson()).toList(),
+          'jobTypes': jobTypes.map((j) => j.toJson()).toList(),
+        };
+        await _driveService.uploadBackup(data);
+        _lastBackupTime = DateTime.now();
+        notifyListeners();
+      } catch (e) {
+        debugPrint('Backup failed: $e');
+      }
+    }
+  }
+
+  Future<void> restoreFromBYOS() async {
+    if (!_isBYOS) return;
+    try {
+      final data = await _driveService.downloadBackup();
+      if (data == null) return;
+
+      if (data['jobTypes'] != null) {
+        for (var jobData in data['jobTypes']) {
+          final job = JobType.fromJson(jobData);
+          await _persistence.jobTypesBox.put(job.id, job);
+        }
+      }
+
+      if (data['expenses'] != null) {
+        for (var expData in data['expenses']) {
+          final exp = Expense.fromJson(expData);
+          await _persistence.expensesBox.put(exp.id, exp);
+        }
+      }
+
+      if (data['shifts'] != null) {
+        for (var shiftData in data['shifts']) {
+          final shift = Shift.fromJson(shiftData);
+          await _persistence.shiftsBox.put(shift.id, shift);
+        }
+      }
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Restore from BYOS failed: $e');
+    }
+  }
+
+  Future<void> syncWithServer({bool? keepLocal}) async {
     if (_authToken == null) return;
     try {
-      // 1. Sync Job Types
+      // 1. Get remote data
       final remoteJobTypes = await _apiService.getJobTypes(_authToken!);
+      final remoteExpenses = await _apiService.getExpenses(_authToken!);
+      final remoteShifts = await _apiService.getShifts(_authToken!);
+
+      // 2. Handle conflicts if it's the first sync
+      if (keepLocal == false) {
+        // User chose server data - clear local
+        await _persistence.shiftsBox.clear();
+        await _persistence.jobTypesBox.clear();
+        await _persistence.expensesBox.clear();
+      }
+
+      // 3. Save remote to local
       for (var jobData in remoteJobTypes) {
         final job = JobType(
           id: jobData['id'],
           name: jobData['name'],
           hourlyRate: double.parse(jobData['hourly_rate'].toString()),
-          // TODO: handle wageHistory parsing if needed
         );
         await _persistence.jobTypesBox.put(job.id, job);
       }
-      for (var job in jobTypes) {
-        await _syncJobTypeToServer(job);
-      }
 
-      // 2. Sync Expenses
-      final remoteExpenses = await _apiService.getExpenses(_authToken!);
       for (var expData in remoteExpenses) {
         final exp = Expense(
           id: expData['id'],
@@ -51,12 +117,7 @@ class ShiftProvider with ChangeNotifier {
         );
         await _persistence.expensesBox.put(exp.id, exp);
       }
-      for (var exp in expenses) {
-        await _syncExpenseToServer(exp);
-      }
 
-      // 3. Sync Shifts
-      final remoteShifts = await _apiService.getShifts(_authToken!);
       for (var shiftData in remoteShifts) {
         final shift = Shift(
           id: shiftData['id'],
@@ -66,18 +127,35 @@ class ShiftProvider with ChangeNotifier {
           jobTypeId: shiftData['job_type_id'],
           tips: double.parse(shiftData['tips'].toString()),
           hourlyRate: double.parse(shiftData['hourly_rate'].toString()),
-          unpaidBreakMinutes: double.parse(shiftData['unpaid_break_minutes']?.toString() ?? '0'),
+          unpaidBreakMinutes: double.parse(
+            shiftData['unpaid_break_minutes']?.toString() ?? '0',
+          ),
         );
         await _persistence.shiftsBox.put(shift.id, shift);
       }
 
-      for (var shift in shifts) {
-        await _syncShiftToServer(shift);
+      // 4. Upload local to server (if user chose to keep local or merge)
+      if (keepLocal != false) {
+        for (var job in jobTypes) {
+          await _syncJobTypeToServer(job);
+        }
+        for (var exp in expenses) {
+          await _syncExpenseToServer(exp);
+        }
+        for (var shift in shifts) {
+          await _syncShiftToServer(shift);
+        }
       }
+
       notifyListeners();
     } catch (e) {
       debugPrint('Sync failed: $e');
     }
+  }
+
+  void updateAuthToken(String? token) {
+    _authToken = token;
+    // Don't auto-sync here anymore, let the AuthScreen handle it once to ask for preference
   }
 
   Future<void> _syncJobTypeToServer(JobType job) async {
@@ -86,7 +164,14 @@ class ShiftProvider with ChangeNotifier {
       'id': job.id,
       'name': job.name,
       'hourly_rate': job.hourlyRate,
-      'wage_history': job.wageHistory?.map((e) => {'startDate': e.startDate.toIso8601String(), 'hourlyRate': e.hourlyRate}).toList(),
+      'wage_history': job.wageHistory
+          ?.map(
+            (e) => {
+              'startDate': e.startDate.toIso8601String(),
+              'hourlyRate': e.hourlyRate,
+            },
+          )
+          .toList(),
     });
   }
 
@@ -104,7 +189,7 @@ class ShiftProvider with ChangeNotifier {
     if (_authToken == null) return;
     final job = getJobTypeById(shift.jobTypeId);
     final rate = shift.hourlyRate ?? job?.getRateForDate(shift.date) ?? 0.0;
-    
+
     await _apiService.upsertShift(_authToken!, {
       'id': shift.id,
       'job_type_id': shift.jobTypeId,
@@ -115,7 +200,9 @@ class ShiftProvider with ChangeNotifier {
       'break_type': shift.breakType?.toString().split('.').last,
       'unpaid_break_minutes': shift.unpaidBreakMinutes,
       'hourly_rate': rate,
-      'automatic_expenses': shift.automaticExpenses?.map((e) => {'description': e.description, 'amount': e.amount}).toList(),
+      'automatic_expenses': shift.automaticExpenses
+          ?.map((e) => {'description': e.description, 'amount': e.amount})
+          .toList(),
       'total_pay': shift.calculateTotalPay(rate),
     });
   }
@@ -207,6 +294,7 @@ class ShiftProvider with ChangeNotifier {
     await _persistence.shiftsBox.put(shift.id, shift);
     _scheduleReminder(shift, l10n: l10n);
     _syncShiftToServer(shift);
+    _triggerBackup();
     notifyListeners();
   }
 
@@ -214,6 +302,7 @@ class ShiftProvider with ChangeNotifier {
     await shift.save();
     _scheduleReminder(shift, l10n: l10n);
     _syncShiftToServer(shift);
+    _triggerBackup();
     notifyListeners();
   }
 
@@ -223,6 +312,7 @@ class ShiftProvider with ChangeNotifier {
     if (_authToken != null) {
       await _apiService.deleteShift(_authToken!, id);
     }
+    _triggerBackup();
     notifyListeners();
   }
 
@@ -263,12 +353,14 @@ class ShiftProvider with ChangeNotifier {
   Future<void> addExpense(Expense expense) async {
     await _persistence.expensesBox.put(expense.id, expense);
     _syncExpenseToServer(expense);
+    _triggerBackup();
     notifyListeners();
   }
 
   Future<void> updateExpense(Expense expense) async {
     await expense.save();
     _syncExpenseToServer(expense);
+    _triggerBackup();
     notifyListeners();
   }
 
@@ -277,12 +369,14 @@ class ShiftProvider with ChangeNotifier {
     if (_authToken != null) {
       await _apiService.deleteExpense(_authToken!, id);
     }
+    _triggerBackup();
     notifyListeners();
   }
 
   Future<void> addJobType(JobType jobType) async {
     await _persistence.jobTypesBox.put(jobType.id, jobType);
     _syncJobTypeToServer(jobType);
+    _triggerBackup();
     notifyListeners();
   }
 
@@ -293,6 +387,7 @@ class ShiftProvider with ChangeNotifier {
       await _persistence.jobTypesBox.put(jobType.id, jobType);
     }
     _syncJobTypeToServer(jobType);
+    _triggerBackup();
     // Keep shift snapshots in sync with the updated wage history
     await _resyncShiftRatesForJob(jobType);
     notifyListeners();
@@ -303,6 +398,7 @@ class ShiftProvider with ChangeNotifier {
     if (_authToken != null) {
       await _apiService.deleteJobType(_authToken!, id);
     }
+    _triggerBackup();
     notifyListeners();
   }
 
